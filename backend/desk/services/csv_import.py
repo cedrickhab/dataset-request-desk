@@ -16,10 +16,11 @@ Row outcomes:
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
-from datetime import datetime, timezone as dt_timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from typing import IO, Iterable, Iterator
+from typing import IO
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
@@ -136,8 +137,8 @@ def parse_recorded_at(raw: str) -> datetime:
         except ValueError:
             continue
         if not aware:
-            parsed = parsed.replace(tzinfo=dt_timezone.utc)
-        parsed = parsed.astimezone(dt_timezone.utc)
+            parsed = parsed.replace(tzinfo=UTC)
+        parsed = parsed.astimezone(UTC)
         if parsed > timezone.now():
             raise ValueError("recorded_at is in the future")
         return parsed
@@ -307,7 +308,10 @@ def import_episodes(
             )
             continue
 
-        values = dict(zip(REQUIRED_HEADERS, cells))
+        # strict=True is safe: the column count was checked immediately above.
+        # If that check is ever removed, this raises instead of silently
+        # dropping or mis-aligning a column.
+        values = dict(zip(REQUIRED_HEADERS, cells, strict=True))
         try:
             row = parse_row(values)
         except ValueError as exc:

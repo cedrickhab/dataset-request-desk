@@ -7,7 +7,7 @@ exist on SQLite, so passing there would prove nothing.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone as dt_timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -125,7 +125,7 @@ def make_episode(db):
             task_name=task_name,
             quality=quality,
             recorded_at=recorded_at
-            or datetime(2026, 9, 1, 12, 0, tzinfo=dt_timezone.utc),
+            or datetime(2026, 9, 1, 12, 0, tzinfo=UTC),
             duration_seconds=Decimal(duration_seconds),
             operator_name=operator_name,
         )

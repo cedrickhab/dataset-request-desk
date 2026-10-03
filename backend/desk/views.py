@@ -12,7 +12,7 @@ import io
 import logging
 
 from django.conf import settings
-from django.db.models import Count, Prefetch, QuerySet
+from django.db.models import Count, QuerySet
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response

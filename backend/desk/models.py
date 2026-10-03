@@ -162,8 +162,12 @@ class StatusHistory(models.Model):
     request = models.ForeignKey(
         DatasetRequest, on_delete=models.PROTECT, related_name="history"
     )
-    # Null only for the creation entry, which has no prior status.
-    previous_status = models.CharField(
+    # NULL only for the creation entry. This is the one place where NULL
+    # carries real meaning distinct from "": "this request had no prior
+    # status" is a different fact from "its prior status was blank", and the
+    # distinction is what lets the UI render the first timeline entry
+    # correctly. Hence the deliberate exception to the usual blank="" rule.
+    previous_status = models.CharField(  # noqa: DJ001 - NULL means "no prior status"
         max_length=16, choices=RequestStatus.choices, null=True, blank=True
     )
     new_status = models.CharField(max_length=16, choices=RequestStatus.choices)

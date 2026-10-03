@@ -50,6 +50,27 @@ _MESSAGE_BY_STATUS = {
     404: "Not found.",
 }
 
+# DRF's own generic default_codes. When an exception carries one of these it
+# tells us nothing the status code does not, so the contract's status-derived
+# code wins. A code outside this set came from one of our own exceptions
+# (last_admin_protected, self_deactivation, upload_too_large, ...) and is more
+# specific than the status, so it is kept.
+_GENERIC_DRF_CODES = frozenset(
+    {
+        "invalid",
+        "parse_error",
+        "authentication_failed",
+        "not_authenticated",
+        "permission_denied",
+        "not_found",
+        "method_not_allowed",
+        "not_acceptable",
+        "unsupported_media_type",
+        "throttled",
+        "error",
+    }
+)
+
 
 def _flatten(detail: Any) -> tuple[str, dict[str, Any] | None]:
     """Split a DRF detail into a human message and an optional field map."""
@@ -89,9 +110,9 @@ def exception_handler(exc: Exception, context: dict[str, Any]) -> Response | Non
 
     request = context.get("request")
     request_id = getattr(request, "request_id", None) if request else None
-    code = getattr(exc, "default_code", None) or _CODE_BY_STATUS.get(
-        response.status_code, "error"
-    )
+    status_code = _CODE_BY_STATUS.get(response.status_code, "error")
+    specific = getattr(exc, "default_code", None)
+    code = status_code if specific in _GENERIC_DRF_CODES or not specific else specific
     message, fields = _flatten(response.data)
     if response.status_code in _MESSAGE_BY_STATUS and not fields:
         # DRF's stock wording for these is fine, but keep it uniform.

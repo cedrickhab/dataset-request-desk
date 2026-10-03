@@ -19,7 +19,7 @@ drift from them):
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone as dt_timezone
+from datetime import UTC, date, datetime, time, timedelta
 
 from django.db import connection
 from django.db.models import Count, Q
@@ -35,13 +35,13 @@ class Window:
 
     @property
     def lower(self) -> datetime:
-        return datetime.combine(self.start, time.min, tzinfo=dt_timezone.utc)
+        return datetime.combine(self.start, time.min, tzinfo=UTC)
 
     @property
     def upper(self) -> datetime:
         """Exclusive upper bound: midnight after the inclusive end date."""
         return datetime.combine(
-            self.end + timedelta(days=1), time.min, tzinfo=dt_timezone.utc
+            self.end + timedelta(days=1), time.min, tzinfo=UTC
         )
 
 

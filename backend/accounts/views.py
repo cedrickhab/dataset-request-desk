@@ -134,6 +134,20 @@ class UserDetailView(APIView):
         return Response(UserSerializer(user).data)
 
 
+def probe_database() -> None:
+    """Round-trip the database. Raises on any failure.
+
+    A separate function so a test can simulate an unreachable database
+    without patching the connection that the session backend also needs to
+    authenticate the request.
+    """
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+
+
 class HealthView(APIView):
     """Authenticated health check.
 
@@ -145,15 +159,12 @@ class HealthView(APIView):
     permission_classes = [IsActiveAuthenticated]
 
     def get(self, request):
-        from django.db import connection
-
         try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
+            probe_database()
         except Exception:
-            # Sanitized: the caller learns the database is unavailable, not
-            # the host, port or driver error text.
+            # Sanitized deliberately. The error text can carry the host, port,
+            # database name and sometimes credentials from the DSN, none of
+            # which belongs in a client response.
             logger.warning("health check failed", extra={"component": "database"})
             return Response(
                 {"status": "unavailable", "database": "unavailable"},
