@@ -166,7 +166,7 @@
     },
     {
       "id": "personal-admin-not-configured",
-      "detail": "PERSONAL_ADMIN_EMAIL and PERSONAL_ADMIN_PASSWORD are unset locally, so seed_users skips the optional personal administrator. Demo seeding is unaffected. The spelling cedrichub85@gmail.com was confirmed by the user for commit authorship but no password was supplied.",
+      "detail": "PERSONAL_ADMIN_EMAIL and PERSONAL_ADMIN_PASSWORD are unset locally, so seed_users skips the optional personal administrator. Demo seeding is unaffected and the five reviewer accounts work.",
       "needed_from_user": "Set both variables in the gitignored .env to create that account.",
       "impact": "None on the demo flow; the five reviewer accounts work."
     }
