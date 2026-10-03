@@ -1,86 +1,175 @@
 {
-  "overall_status": "not_started",
+  "overall_status": "core_complete_pending_remote",
   "selected_stretch": "background_exports",
-  "current_task": 1,
+  "current_task": 11,
   "tasks": [
     {
       "number": 1,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Architecture and scaffold",
+      "status": "complete",
+      "evidence": [
+        "monorepo backend/ frontend/ infra/ scripts/ created",
+        "docker compose up --build brings up db, init, api, worker, web; all healthy",
+        "pinned Django 5.2.17, DRF 3.18.1, psycopg 3.3.6, postgres:17.11-alpine, node:22-alpine",
+        "versions checked against PyPI/npm/Docker Hub, not assumed"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 2,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Schema and seed",
+      "status": "complete",
+      "evidence": [
+        "migrations apply to a fresh PostgreSQL 17.11; makemigrations --check reports no drift",
+        "custom user bootstrapped before the initial migration",
+        "seed_users run twice: 5 created then 0 created, no password reset",
+        "UNIQUE on assignment.episode and CHECK constraints on duration/enums verified by tests"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 3,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Login, roles, user management",
+      "status": "complete",
+      "evidence": [
+        "212 backend tests green, 31 of them auth/role specific",
+        "FOUND AND FIXED: anonymous POST /auth/login had no CSRF check at all (APIView.as_view applies csrf_exempt; SessionAuthentication skips enforce_csrf with no session user)",
+        "FOUND AND FIXED: unauthenticated requests returned 403 instead of 401",
+        "verified live: login without CSRF token -> 403; /health anonymous -> 401, authenticated -> 200",
+        "last-admin demotion and self-deactivation both refused with 409 against the running stack"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 4,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Requests and history",
+      "status": "complete",
+      "evidence": [
+        "full lifecycle verified live: submitted -> in_progress -> delivered -> rejected -> in_progress -> delivered -> accepted",
+        "7 history entries recorded with actor and timestamp",
+        "cross-client access returns 404 not 403 (no existence oracle)",
+        "operator AND admin both refused when accepting a client's request",
+        "first_delivered_at not reset by rework, asserted by test"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 5,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "CSV import",
+      "status": "complete",
+      "evidence": [
+        "REAL EXECUTED TOTALS on seed/episodes.csv: processed=189 imported=172 skipped=17 (duplicate=2 conflict=2 invalid=13) blank=2",
+        "re-import imports 0; episode count stays 172 (idempotent, verified three consecutive runs)",
+        "every documented anomaly classified: missing id/robot/quality/operator, casing, padding, day-first and space-separated dates, future 2031, negative -5, decimal 45.5, N/A, 999999, quality 'excellent', unknown arm-99, short row, quoted comma, conflicting EP-00011, lowercase ep-00003",
+        "53 import tests including NaN/Infinity rejection and per-row savepoint isolation"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 6,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Episode search and allocation",
+      "status": "complete",
+      "evidence": [
+        "bad quality, task mismatch and already-reserved all refused with 409 against the running stack",
+        "re-assigning the same episode returns the existing link and creates no second export job",
+        "two threads on separate connections assigning one episode: exactly one wins, one row stored",
+        "removal blocked once delivered; freed episode becomes assignable again"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 7,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Analytics and operability",
+      "status": "complete",
+      "evidence": [
+        "analytics verified live: 172 episodes, 95 good, top task pick cup=19, 125 daily rows",
+        "median via percentile_cont returned 3.783643 seconds for a real delivered request",
+        "27 analytics tests covering window boundaries, even/odd medians, null-not-zero, tie ordering",
+        "query-count guard asserts aggregation stays in the database",
+        "one JSON access log line per request with method/path/status/duration_ms/user_id/request_id",
+        "logged paths exclude query strings; no seed or env secret appears in any container log"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 8,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "UI and integration",
+      "status": "complete",
+      "evidence": [
+        "React 19 + TypeScript + Vite; prototype layout, palette and spacing preserved",
+        "32 frontend tests green; eslint and tsc clean",
+        "buttons driven by server allowed_actions; 409 surfaces and triggers refetch",
+        "staff screens code-split: initial bundle 93 kB gzip, staff chunks 6 kB loaded only for staff",
+        "12 Lucide icons inlined as 1.5 kB instead of adding lucide-react"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 9,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Simulated export jobs",
+      "status": "complete",
+      "evidence": [
+        "26 export tests, all deterministic via an injected simulator (no probabilistic flakiness)",
+        "VERIFIED LIVE: worker stopped, 6 episodes assigned -> all 6 jobs durable as pending",
+        "worker restarted -> all 6 completed; real retries occurred (one job took 3 attempts, another 2)",
+        "stale claim token cannot overwrite a reclaimed job; expired lease reclaimed with attempt accounting",
+        "export failure does not gate delivery (documented MVP policy); no download URL is ever exposed"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 10,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Verification and CI",
+      "status": "complete",
+      "evidence": [
+        "244 automated tests total: 212 backend on real PostgreSQL, 32 frontend",
+        "concurrency tests use separate connections so PostgreSQL row locks genuinely apply",
+        "scripts/check.sh runs the whole gate against a disposable tmpfs database",
+        "CI has three jobs: backend, frontend, and a clean-startup job that asserts /health is 401 anonymously and 200 with a seeded session"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     },
     {
       "number": 11,
-      "status": "pending",
-      "evidence": [],
-      "commit_sha": null,
-      "ci_status": "not_run"
+      "title": "Clean clone and handoff",
+      "status": "complete",
+      "evidence": [
+        "55-check end-to-end walkthrough against the running stack: 55 passed, 0 failed",
+        "all five seeded accounts log in through the nginx proxy",
+        "README and NOTES written from recorded output, no invented figures"
+      ],
+      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
+      "ci_status": "not_observed_no_remote"
     }
   ],
-  "blockers": [],
-  "focused_minutes": 0
+  "blockers": [
+    {
+      "id": "github-account-mismatch",
+      "detail": "CLAUDE_START_PROMPT.md requires the public repository under cedrickhab and states 'Require cedrickhab'. The authenticated gh account on this machine is kamufozi. No repository was created and nothing was pushed.",
+      "needed_from_user": "Authenticate gh as cedrickhab (gh auth login --scopes 'repo,read:org,gist,workflow'), then confirm repository creation. The workflow scope is required because pushing .github/workflows/ci.yml is rejected without it.",
+      "impact": "CI has never executed, so no CI status is claimed anywhere."
+    },
+    {
+      "id": "personal-admin-not-configured",
+      "detail": "PERSONAL_ADMIN_EMAIL and PERSONAL_ADMIN_PASSWORD are unset locally, so seed_users skips the optional personal administrator. Demo seeding is unaffected. The spelling cedrichub85@gmail.com was confirmed by the user for commit authorship but no password was supplied.",
+      "needed_from_user": "Set both variables in the gitignored .env to create that account.",
+      "impact": "None on the demo flow; the five reviewer accounts work."
+    }
+  ],
+  "verification_notes": [
+    "No CI run has been observed, because no remote exists. CI status is recorded as not_observed rather than passing.",
+    "Export timing (2-5s sleep, 20% failure) was exercised by hand against the running worker; unit tests inject a deterministic simulator instead of sleeping.",
+    "Deployment (docs/12) was deliberately not executed."
+  ],
+  "focused_minutes": null
 }
