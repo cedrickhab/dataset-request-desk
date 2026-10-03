@@ -350,7 +350,7 @@ export function RequestDetail() {
 
 function BackLink() {
   return (
-    <Link className="badge" to="/requests">
+    <Link className="btnlink" to="/requests">
       <Icon name="arrow-left" size={14} /> Back to requests
     </Link>
   )

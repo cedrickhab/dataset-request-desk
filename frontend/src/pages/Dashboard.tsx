@@ -78,11 +78,11 @@ export function Dashboard() {
         }
         action={
           isClient ? (
-            <Link className="badge" to="/requests">
+            <Link className="btnlink" to="/requests">
               <Icon name="plus" size={14} /> New request
             </Link>
           ) : (
-            <Link className="badge" to="/requests">
+            <Link className="btnlink" to="/requests">
               View requests
             </Link>
           )
@@ -158,7 +158,7 @@ export function Dashboard() {
       <section className="panel">
         <div className="row between">
           <h2>Recent requests</h2>
-          <Link className="badge" to="/requests">
+          <Link className="btnlink" to="/requests">
             View all
           </Link>
         </div>

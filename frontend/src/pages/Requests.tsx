@@ -200,7 +200,7 @@ export function RequestTable({
                 <StatusBadge status={row.status} />
               </td>
               <td>
-                <Link className="badge" to={`/requests/${row.id}`}>
+                <Link className="btnlink" to={`/requests/${row.id}`}>
                   Open
                 </Link>
               </td>

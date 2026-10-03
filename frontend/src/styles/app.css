@@ -69,3 +69,31 @@ input[aria-invalid='true'],select[aria-invalid='true'],textarea[aria-invalid='tr
   .modal footer{flex-direction:column}
   .modal footer button{width:100%}
 }
+
+/* Anchors standing in for the prototype's buttons.
+ *
+ * The prototype built navigation and row actions from <button>. Here they are
+ * real links, so they can be middle-clicked and opened in a new tab -- but an
+ * anchor is inline by default, so the prototype's `.nav{width:100%}` does not
+ * lay out the same way and the sidebar items flow side by side and wrap.
+ * These rules restore the intended appearance without giving up link
+ * semantics. */
+.nav{
+  display:flex;align-items:center;gap:4px;
+  text-decoration:none;color:var(--ink);border-radius:7px;
+}
+.nav:hover{background:var(--pale)}
+.sidebar nav{display:flex;flex-direction:column}
+
+/* Row and header actions that navigate rather than submit. */
+.btnlink{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);background:white;color:var(--ink);
+  border-radius:7px;padding:6px 11px;font-size:11px;font-weight:600;
+  text-decoration:none;white-space:nowrap;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.btnlink:hover{background:#f4f6fa;color:#80501a;border-color:#d4a452}
+.btnlink:focus-visible{outline:3px solid #d69733;outline-offset:3px}
+.btnlink.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btnlink.primary:hover{background:#874807;color:white}

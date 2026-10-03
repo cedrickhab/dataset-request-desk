@@ -8,6 +8,16 @@
 
 import type { ExportStatus, Quality, RequestStatus, Role } from '../api/types'
 
+/**
+ * Badge label: underscores become spaces and the first letter is capitalised.
+ * Mirrors the prototype's `title()` helper so "admin" reads "Admin" and
+ * "in_progress" reads "In progress".
+ */
+export function titleCase(value: string): string {
+  const spaced = value.replaceAll('_', ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
 /** Everything the Badge component accepts. Kept as a closed union so a typo
  *  is a type error rather than a silently unstyled pill. */
 export type BadgeKind = RequestStatus | Quality | ExportStatus | Role

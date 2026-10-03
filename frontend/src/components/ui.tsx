@@ -14,7 +14,7 @@ import {
 } from 'react'
 
 import { Icon } from './Icon'
-import { statusLabel, type BadgeKind } from './format'
+import { statusLabel, titleCase, type BadgeKind } from './format'
 import type { Quality, RequestStatus } from '../api/types'
 
 
@@ -32,11 +32,13 @@ export function Badge({
   kind: BadgeKind
   children?: ReactNode
 }) {
-  return <span className={`badge ${kind}`}>{children ?? kind}</span>
+  // The class carries the colour; the label is always rendered as text so
+  // the meaning never depends on hue alone.
+  return <span className={`badge ${kind}`}>{children ?? titleCase(kind)}</span>
 }
 
 export function QualityBadge({ quality }: { quality: Quality }) {
-  return <Badge kind={quality}>{quality}</Badge>
+  return <Badge kind={quality} />
 }
 
 export function StatusBadge({ status }: { status: RequestStatus }) {
