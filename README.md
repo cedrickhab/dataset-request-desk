@@ -117,7 +117,7 @@ docker compose -f compose.test.yaml run --rm check-frontend          # frontend
 
 ### What is covered
 
-**244 tests: 212 backend, 32 frontend.** The choice of what to test follows the
+**248 tests: 216 backend, 32 frontend.** The choice of what to test follows the
 brief's priorities — authorization, status transitions, assignment rules and
 import idempotency — rather than chasing a coverage number.
 
@@ -130,6 +130,7 @@ import idempotency — rather than chasing a coverage number.
 | Analytics | 27 | window boundaries; even and odd medians; null not zero; a query-count guard that fails if aggregation moves into Python |
 | Export jobs | 26 | stale claim token discarded; expired lease reclaimed; completed job never reruns |
 | Operability | 20 | exactly one log line per request; no query string or password in logs; sanitized 503 |
+| Query cost | 4 | every list endpoint stays at 4 queries when its row count grows 10x |
 | Frontend | 32 | CSRF handshake; session expiry; actions driven by the server; conflict recovery |
 
 The backend suite requires **real PostgreSQL**. The locking under test
@@ -319,6 +320,33 @@ confirm the id exists and belongs to someone, which is more than the caller
 should learn.
 
 ---
+
+## Query cost
+
+Every list endpoint issues a **constant 4 queries** regardless of how many rows
+it returns — session, user, the pagination COUNT, and the page itself.
+`/api/auth/me` is 2. Measured, not estimated:
+
+```
+GET /api/requests      (11 rows)  4 queries
+GET /api/episodes      (30 rows)  4 queries
+GET .../assignments    (10 rows)  4 queries
+GET .../history                   4 queries
+```
+
+That is only true because the relationships are eager-loaded: the request list
+`select_related`s the client and annotates `assigned_count` as one aggregate;
+the assignment list `select_related`s the episode, its export job and the
+assigning user; history `select_related`s the actor. Without those, each row
+would add a query and a page of 25 would cost 25-100 instead of 4.
+
+`tests/test_query_counts.py` asserts this directly — it loads one row, records
+the query count, then loads ten times as many and fails if the count moved. At
+10x the current row count the query count does not change; what grows is the
+row data itself, which is bounded by `page_size` (default 25, max 100).
+
+The exception is analytics, which aggregates across the whole window rather
+than a page; its scaling is discussed above.
 
 ## Operability
 
