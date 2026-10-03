@@ -1,5 +1,5 @@
 {
-  "overall_status": "core_complete_pending_remote",
+  "overall_status": "core_complete",
   "selected_stretch": "background_exports",
   "current_task": 11,
   "tasks": [
@@ -13,8 +13,8 @@
         "pinned Django 5.2.17, DRF 3.18.1, psycopg 3.3.6, postgres:17.11-alpine, node:22-alpine",
         "versions checked against PyPI/npm/Docker Hub, not assumed"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 2,
@@ -26,8 +26,8 @@
         "seed_users run twice: 5 created then 0 created, no password reset",
         "UNIQUE on assignment.episode and CHECK constraints on duration/enums verified by tests"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 3,
@@ -40,8 +40,8 @@
         "verified live: login without CSRF token -> 403; /health anonymous -> 401, authenticated -> 200",
         "last-admin demotion and self-deactivation both refused with 409 against the running stack"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 4,
@@ -54,8 +54,8 @@
         "operator AND admin both refused when accepting a client's request",
         "first_delivered_at not reset by rework, asserted by test"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 5,
@@ -67,8 +67,8 @@
         "every documented anomaly classified: missing id/robot/quality/operator, casing, padding, day-first and space-separated dates, future 2031, negative -5, decimal 45.5, N/A, 999999, quality 'excellent', unknown arm-99, short row, quoted comma, conflicting EP-00011, lowercase ep-00003",
         "53 import tests including NaN/Infinity rejection and per-row savepoint isolation"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 6,
@@ -80,8 +80,8 @@
         "two threads on separate connections assigning one episode: exactly one wins, one row stored",
         "removal blocked once delivered; freed episode becomes assignable again"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 7,
@@ -95,8 +95,8 @@
         "one JSON access log line per request with method/path/status/duration_ms/user_id/request_id",
         "logged paths exclude query strings; no seed or env secret appears in any container log"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 8,
@@ -113,8 +113,8 @@
         "320px VERIFIED, not assumed: on /, /requests, /episodes and /analytics the page does not scroll sideways (window.scrollTo(400,0) leaves scrollX at 0) while tables scroll inside their wrappers.",
         "UI compared against prototype/index.html by screenshot, which is how the badge casing, nav wrapping and donut omission were all found."
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 9,
@@ -127,8 +127,8 @@
         "stale claim token cannot overwrite a reclaimed job; expired lease reclaimed with attempt accounting",
         "export failure does not gate delivery (documented MVP policy); no download URL is ever exposed"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 10,
@@ -141,8 +141,8 @@
         "CI has three jobs: backend, frontend, and a clean-startup job that asserts /health is 401 anonymously and 200 with a seeded session",
         "AUDIT FIX: compose.test.yaml bind-mounted ./frontend read-write and ran npm ci inside an Alpine container, which overwrote the developer's node_modules with musl-linked binaries and broke the host toolchain. The frontend gate now builds a `check` stage that copies the source into the image; verified that node_modules owner and contents are unchanged after a full ./scripts/check.sh run."
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     },
     {
       "number": 11,
@@ -153,17 +153,11 @@
         "all five seeded accounts log in through the nginx proxy",
         "README and NOTES written from recorded output, no invented figures"
       ],
-      "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
-      "ci_status": "not_observed_no_remote"
+      "commit_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+      "ci_status": "success_observed"
     }
   ],
   "blockers": [
-    {
-      "id": "github-account-mismatch",
-      "detail": "CLAUDE_START_PROMPT.md requires the public repository under cedrickhab and states 'Require cedrickhab'. The authenticated gh account on this machine is kamufozi. No repository was created and nothing was pushed.",
-      "needed_from_user": "Authenticate gh as cedrickhab (gh auth login --scopes 'repo,read:org,gist,workflow'), then confirm repository creation. The workflow scope is required because pushing .github/workflows/ci.yml is rejected without it.",
-      "impact": "CI has never executed, so no CI status is claimed anywhere."
-    },
     {
       "id": "personal-admin-not-configured",
       "detail": "PERSONAL_ADMIN_EMAIL and PERSONAL_ADMIN_PASSWORD are unset locally, so seed_users skips the optional personal administrator. Demo seeding is unaffected and the five reviewer accounts work.",
@@ -172,10 +166,19 @@
     }
   ],
   "verification_notes": [
-    "No CI run has been observed, because no remote exists. CI status is recorded as not_observed rather than passing.",
     "Export timing (2-5s sleep, 20% failure) was exercised by hand against the running worker; unit tests inject a deterministic simulator instead of sleeping.",
     "Deployment (docs/12) was deliberately not executed.",
-    "A self-audit against AGENT_PROMPT.md and docs/08 found the donut omission, the mobile nav regression and the test-harness working-tree bug. All three are fixed and verified; they are recorded here rather than quietly corrected."
+    "A self-audit against AGENT_PROMPT.md and docs/08 found the donut omission, the mobile nav regression and the test-harness working-tree bug. All three are fixed and verified; they are recorded here rather than quietly corrected.",
+    "CI was observed green at the exact pushed SHA 907d75c, not assumed. The clean-startup job asserts docker compose up works from a fresh checkout, that /health is 401 anonymously and 200 with a seeded session, and that the export worker starts."
   ],
-  "focused_minutes": null
+  "focused_minutes": null,
+  "remote": {
+    "url": "https://github.com/cedrickhab/dataset-request-desk",
+    "owner": "cedrickhab",
+    "visibility": "public",
+    "default_branch": "main",
+    "first_push_sha": "907d75c92c600b6131c65c3b140734b766f93d65",
+    "ci_run": "https://github.com/cedrickhab/dataset-request-desk/actions/runs/37148170751",
+    "ci_result": "success, observed at that exact SHA: backend, frontend and clean-startup jobs all passed"
+  }
 }
