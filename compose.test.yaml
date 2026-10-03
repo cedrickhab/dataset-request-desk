@@ -1,0 +1,64 @@
+# One-command verification against a disposable database:
+#
+#   docker compose -f compose.test.yaml run --rm check
+#
+# A separate compose project name and NO named volume, so this never touches
+# the database or data created by compose.yaml. The test database lives in the
+# container's own tmpfs and dies with it.
+
+name: dataset-request-desk-test
+
+services:
+  test-db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_DB: dataset_desk_test
+      POSTGRES_USER: dataset_desk
+      # Throwaway credentials for an ephemeral, never-published container.
+      POSTGRES_PASSWORD: test-only-password
+    # In-memory: faster, and guarantees nothing survives the run.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataset_desk -d dataset_desk_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  check:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+      args:
+        INSTALL_DEV: "true"
+    environment:
+      DJANGO_SECRET_KEY: test-only-secret-key-not-used-outside-ci
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      DJANGO_SECURE_COOKIES: "false"
+      POSTGRES_DB: dataset_desk_test
+      POSTGRES_USER: dataset_desk
+      POSTGRES_PASSWORD: test-only-password
+      POSTGRES_HOST: test-db
+      POSTGRES_PORT: "5432"
+      LOG_FORMAT: plain
+      LOG_LEVEL: WARNING
+    volumes:
+      # Mounted read-only: the gate runs the frontend checks too and must not
+      # be able to modify the working tree.
+      - ./scripts:/app/scripts:ro
+    depends_on:
+      test-db:
+        condition: service_healthy
+    command: ["/app/scripts/check-backend.sh"]
+
+  # Frontend lint, typecheck, unit tests and build. Split from the backend
+  # service so each half can be run on its own while iterating.
+  check-frontend:
+    image: node:22-alpine
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - ./scripts:/app/scripts:ro
+    command: ["/app/scripts/check-frontend.sh"]

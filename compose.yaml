@@ -1,0 +1,96 @@
+# docker compose up --build
+#
+# Service order is enforced by health and completion conditions, not by sleeps:
+#   db   -> healthy (pg_isready)
+#   init -> runs migrations and seeding once, then exits 0
+#   api, worker, web -> start only after init succeeded
+#
+# Readiness uses pg_isready inside the network rather than the application's
+# /health endpoint, because /health requires a session by design.
+
+name: dataset-request-desk
+
+services:
+  db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dataset_desk}
+      POSTGRES_USER: ${POSTGRES_USER:-dataset_desk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dataset_desk} -d ${POSTGRES_DB:-dataset_desk}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  # Runs once per `up`. Migrations and seeding happen here, never in the api
+  # or worker start-up, so three replicas cannot race the same migration.
+  init:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+    environment: &backend_env
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,api,web}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      DJANGO_SECURE_COOKIES: ${DJANGO_SECURE_COOKIES:-false}
+      POSTGRES_DB: ${POSTGRES_DB:-dataset_desk}
+      POSTGRES_USER: ${POSTGRES_USER:-dataset_desk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Optional. Both must be set or the account is skipped entirely.
+      PERSONAL_ADMIN_EMAIL: ${PERSONAL_ADMIN_EMAIL:-}
+      PERSONAL_ADMIN_PASSWORD: ${PERSONAL_ADMIN_PASSWORD:-}
+      PERSONAL_ADMIN_NAME: ${PERSONAL_ADMIN_NAME:-}
+    command: >
+      sh -c "python manage.py migrate --no-input &&
+             python manage.py seed_users"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+    environment: *backend_env
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Separate container so a long simulated export never occupies an API worker.
+  worker:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+    environment: *backend_env
+    command: ["python", "manage.py", "run_export_worker"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.frontend
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  db_data:

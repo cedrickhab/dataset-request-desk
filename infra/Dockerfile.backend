@@ -1,0 +1,36 @@
+# Python 3.12 is the documented target and is supported by Django 5.2 LTS.
+FROM python:3.12-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# Dependencies first so a source change does not invalidate the pip layer.
+COPY backend/requirements.txt backend/requirements-dev.txt /app/backend/
+ARG INSTALL_DEV=false
+RUN pip install -r /app/backend/requirements.txt \
+    && if [ "$INSTALL_DEV" = "true" ]; then \
+         pip install -r /app/backend/requirements-dev.txt; \
+       fi
+
+COPY backend /app/backend
+# seed/ holds users.json and episodes.csv, read by the seed and import
+# commands at runtime. settings.REPO_ROOT resolves to /app.
+COPY seed /app/seed
+
+# Run as a non-root user.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+WORKDIR /app/backend
+EXPOSE 8000
+
+CMD ["gunicorn", "config.wsgi:application", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "3", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
