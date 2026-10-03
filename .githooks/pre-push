@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Pre-push gate. Installed via core.hooksPath, so it travels with the repo:
+#
+#   git config core.hooksPath .githooks
+#
+# Runs the same checks CI runs. A failure here blocks the push, which is the
+# point: CI reports on a commit that already exists and cannot retroactively
+# undo it, so the cheapest place to catch a break is before it is published.
+#
+# Never bypass this with --no-verify. If the checks are wrong, fix the checks.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "pre-push: running the full gate"
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "pre-push: docker is unavailable, so the gate cannot run." >&2
+  echo "pre-push: start Docker and push again." >&2
+  exit 1
+fi
+
+./scripts/check.sh
+
+echo "pre-push: all checks passed"
