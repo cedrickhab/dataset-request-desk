@@ -1,0 +1,30 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+frontend/dist/
+
+# Agent runner state (see AUTOMATION.md)
+.agent-runs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Large generated fixtures
+seed/episodes_large.csv

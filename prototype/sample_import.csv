@@ -1,0 +1,5 @@
+episode_id,robot_id,task_name,recorded_at,duration_seconds,operator_name,quality
+EP-DEMO-101,arm-01,pick cup,2026-09-10T09:00:00Z,35,Aline,good
+EP-DEMO-102,arm-02,pick cup,2026-09-10T09:15:00Z,42,Eric,usable
+EP-DEMO-101,arm-01,pick cup,2026-09-10T09:00:00Z,35,Aline,good
+EP-DEMO-103,arm-99,pick cup,2026-09-10T10:00:00Z,30,Diane,good

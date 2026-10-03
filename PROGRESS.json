@@ -1,0 +1,86 @@
+{
+  "overall_status": "not_started",
+  "selected_stretch": "background_exports",
+  "current_task": 1,
+  "tasks": [
+    {
+      "number": 1,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 2,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 3,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 4,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 5,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 6,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 7,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 8,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 9,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 10,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    },
+    {
+      "number": 11,
+      "status": "pending",
+      "evidence": [],
+      "commit_sha": null,
+      "ci_status": "not_run"
+    }
+  ],
+  "blockers": [],
+  "focused_minutes": 0
+}

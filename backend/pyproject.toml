@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "C4", "SIM"]
+ignore = [
+    # Long lines in comments and messages are checked by E501 only; the
+    # formatter is not run in CI so a few long strings are acceptable.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    "error::DeprecationWarning",
+    # Paginating an unordered queryset silently returns inconsistent pages
+    # (rows repeating or vanishing between pages). Treat it as a failure so it
+    # cannot creep back in. Matched by message rather than by class, because
+    # naming the class here would import Django before settings are loaded.
+    "error:Pagination may yield inconsistent results:RuntimeWarning",
+]

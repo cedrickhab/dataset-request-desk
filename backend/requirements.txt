@@ -1,0 +1,8 @@
+# Pinned exact versions. Django 5.2 is the current LTS; DRF 3.18.1 declares
+# support for it (Framework :: Django :: 5.2) and requires django>=5.2.
+Django==5.2.17
+djangorestframework==3.18.1
+psycopg[binary]==3.3.6
+drf-spectacular==0.30.0
+python-dotenv==1.2.4
+gunicorn==26.2.0
