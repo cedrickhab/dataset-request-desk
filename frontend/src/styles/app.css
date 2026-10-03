@@ -97,3 +97,16 @@ input[aria-invalid='true'],select[aria-invalid='true'],textarea[aria-invalid='tr
 .btnlink:focus-visible{outline:3px solid #d69733;outline-offset:3px}
 .btnlink.primary{background:var(--accent);color:white;border-color:var(--accent)}
 .btnlink.primary:hover{background:#874807;color:white}
+
+/* Donut legend. The ring itself is .donut from the prototype, unchanged. */
+.donut-legend{list-style:none;padding:0;margin:0}
+.donut-legend li{margin:9px 0}
+
+/* Restore the prototype's mobile sidebar: a horizontal strip of nav items
+ * rather than a stacked column. The .nav{display:flex} rule above is declared
+ * later in the cascade than the prototype's @media .nav{display:inline-block},
+ * so it has to be re-stated here or mobile loses the inline arrangement. */
+@media(max-width:650px){
+  .sidebar nav{flex-direction:row;flex-wrap:wrap;gap:4px}
+  .nav{display:inline-flex;width:auto;padding:8px;margin-bottom:0}
+}

@@ -15,6 +15,7 @@ import { useAsync } from '../api/useAsync'
 import type { DatasetRequest, RequestStatus } from '../api/types'
 import { useRoles } from '../auth/useAuth'
 import { Icon } from '../components/Icon'
+import { QualityDonut } from '../components/QualityDonut'
 import {
   BarRow,
   EmptyState,
@@ -49,6 +50,26 @@ export function Dashboard() {
   const requests = useAsync(() => api.listRequests({ page: 1 }), [])
   const episodes = useAsync(
     () => (isStaff ? api.listEpisodes({ available: true, page_size: 1 }) : Promise.resolve(null)),
+    [isStaff],
+  )
+
+  // Quality mix for the donut. Four count-only requests (page_size=1 returns
+  // one row and the total), which is the "reuse scoped list data" the plan
+  // asks for rather than inventing a second analytics surface a client could
+  // not reach anyway. Staff only.
+  const quality = useAsync(
+    () =>
+      isStaff
+        ? Promise.all([
+            api.listEpisodes({ quality: 'good', page_size: 1 }),
+            api.listEpisodes({ quality: 'usable', page_size: 1 }),
+            api.listEpisodes({ quality: 'bad', page_size: 1 }),
+          ]).then(([good, usable, bad]) => ({
+            good: good.count,
+            usable: usable.count,
+            bad: bad.count,
+          }))
+        : Promise.resolve(null),
     [isStaff],
   )
 
@@ -141,17 +162,29 @@ export function Dashboard() {
         </section>
 
         <section className="panel">
-          <h2>{isStaff ? 'How delivery works' : 'How your request moves'}</h2>
-          <ol className="muted">
-            <li>A client submits their dataset needs.</li>
-            <li>Operations start work and assign episodes.</li>
-            <li>The client reviews the delivered metadata.</li>
-            <li>The client accepts or rejects the delivery.</li>
-          </ol>
-          <p className="help">
-            Episode metadata only. No video files are stored or served by this
-            system.
-          </p>
+          <h2>{isStaff ? 'Episode quality' : 'How your request moves'}</h2>
+          {isStaff ? (
+            quality.data ? (
+              <QualityDonut counts={quality.data} />
+            ) : quality.error ? (
+              <ErrorBox message={quality.error} onRetry={quality.reload} />
+            ) : (
+              <Loading label="Counting episodes" />
+            )
+          ) : (
+            <>
+              <ol className="muted">
+                <li>Submit your dataset needs.</li>
+                <li>Staff start work and assign episodes.</li>
+                <li>Review the delivered metadata.</li>
+                <li>Accept or reject the delivery.</li>
+              </ol>
+              <p className="help">
+                Episode metadata only. No video files are stored or served by
+                this system.
+              </p>
+            </>
+          )}
         </section>
       </div>
 

@@ -55,10 +55,15 @@ services:
 
   # Frontend lint, typecheck, unit tests and build. Split from the backend
   # service so each half can be run on its own while iterating.
+  #
+  # Builds the `check` stage, which copies the source into the image. There is
+  # deliberately no bind mount of ./frontend: running npm ci inside an Alpine
+  # container against a mounted directory replaces the developer's node_modules
+  # with musl-linked binaries and breaks their host toolchain. The gate must be
+  # unable to modify the working tree.
   check-frontend:
-    image: node:22-alpine
-    working_dir: /app/frontend
-    volumes:
-      - ./frontend:/app/frontend
-      - ./scripts:/app/scripts:ro
-    command: ["/app/scripts/check-frontend.sh"]
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.frontend
+      target: check
+    command: ["sh", "-c", "echo 'frontend checks passed during image build'"]

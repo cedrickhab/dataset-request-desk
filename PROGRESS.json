@@ -107,7 +107,11 @@
         "32 frontend tests green; eslint and tsc clean",
         "buttons driven by server allowed_actions; 409 surfaces and triggers refetch",
         "staff screens code-split: initial bundle 93 kB gzip, staff chunks 6 kB loaded only for staff",
-        "12 Lucide icons inlined as 1.5 kB instead of adding lucide-react"
+        "12 Lucide icons inlined as 1.5 kB instead of adding lucide-react",
+        "AUDIT FIX: the 190px episode-quality donut named in AGENT_PROMPT's UI amendment and docs/08 had been omitted; the staff dashboard showed a text list instead. Now implemented with an accessible legend (badge + count + percentage), verified live showing 95 good / 62 usable / 15 bad = 172, matching the imported episode count.",
+        "AUDIT FIX: mobile nav stacked vertically because a later .nav rule overrode the prototype's @media display:inline-block; restored.",
+        "320px VERIFIED, not assumed: on /, /requests, /episodes and /analytics the page does not scroll sideways (window.scrollTo(400,0) leaves scrollX at 0) while tables scroll inside their wrappers.",
+        "UI compared against prototype/index.html by screenshot, which is how the badge casing, nav wrapping and donut omission were all found."
       ],
       "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
       "ci_status": "not_observed_no_remote"
@@ -134,7 +138,8 @@
         "244 automated tests total: 212 backend on real PostgreSQL, 32 frontend",
         "concurrency tests use separate connections so PostgreSQL row locks genuinely apply",
         "scripts/check.sh runs the whole gate against a disposable tmpfs database",
-        "CI has three jobs: backend, frontend, and a clean-startup job that asserts /health is 401 anonymously and 200 with a seeded session"
+        "CI has three jobs: backend, frontend, and a clean-startup job that asserts /health is 401 anonymously and 200 with a seeded session",
+        "AUDIT FIX: compose.test.yaml bind-mounted ./frontend read-write and ran npm ci inside an Alpine container, which overwrote the developer's node_modules with musl-linked binaries and broke the host toolchain. The frontend gate now builds a `check` stage that copies the source into the image; verified that node_modules owner and contents are unchanged after a full ./scripts/check.sh run."
       ],
       "commit_sha": "4037c65b21c0a8fd91f35d251d0c642520ba3024",
       "ci_status": "not_observed_no_remote"
@@ -169,7 +174,8 @@
   "verification_notes": [
     "No CI run has been observed, because no remote exists. CI status is recorded as not_observed rather than passing.",
     "Export timing (2-5s sleep, 20% failure) was exercised by hand against the running worker; unit tests inject a deterministic simulator instead of sleeping.",
-    "Deployment (docs/12) was deliberately not executed."
+    "Deployment (docs/12) was deliberately not executed.",
+    "A self-audit against AGENT_PROMPT.md and docs/08 found the donut omission, the mobile nav regression and the test-harness working-tree bug. All three are fixed and verified; they are recorded here rather than quietly corrected."
   ],
   "focused_minutes": null
 }
