@@ -138,6 +138,27 @@ export interface Analytics {
   semantics: Record<string, string>
 }
 
+/** One day of the episode-quality-over-time series (dashboard chart). */
+export interface QualityDay {
+  date: string
+  good: number
+  usable: number
+  bad: number
+}
+
+export interface QualitySeries {
+  start: string
+  end: string
+  /** Business time zone used for day boundaries; Africa/Kigali by default. */
+  timezone: string
+  /** Zero-filled from max(start, data_start); earlier history is unavailable. */
+  days: QualityDay[]
+  /** Earliest day with any import, or null when nothing was ever imported. */
+  data_start: string | null
+  total_imported: number
+  semantics: Record<string, string>
+}
+
 export interface AssignmentResult {
   created_ids: string[]
   existing_ids: string[]

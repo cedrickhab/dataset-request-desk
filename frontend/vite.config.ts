@@ -3,8 +3,15 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
+import pkg from './package.json' with { type: 'json' }
+
 export default defineConfig({
   plugins: [react()],
+  // The footer displays the version only when it comes from real project
+  // metadata: this define reads package.json at build time and nothing else.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   server: {
     port: 5173,
     // Dev-only proxy. In the container the same single-origin arrangement is
@@ -23,6 +30,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 300,
   },
   test: {
+    // Keep jsdom workers within the local Docker memory budget. Assertions
+    // and timeouts stay unchanged; files run sequentially instead of competing.
+    maxWorkers: 1,
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],

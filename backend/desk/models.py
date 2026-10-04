@@ -65,6 +65,8 @@ class Episode(models.Model):
             models.Index(fields=["recorded_at", "robot_id"], name="episode_recorded_robot"),
             # Assignment search: exact task + quality, paginated by id.
             models.Index(fields=["task_name", "quality", "id"], name="episode_task_quality"),
+            # Quality-over-time chart: daily counts over an imported_at range.
+            models.Index(fields=["imported_at"], name="episode_imported_at"),
         ]
         constraints = [
             models.CheckConstraint(

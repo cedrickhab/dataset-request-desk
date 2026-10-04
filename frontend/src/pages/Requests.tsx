@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Request list. One component for both audiences: staff see every request
  * plus a client column, a client sees only their own because the server
  * filters the queryset, not because this file hides rows.
@@ -200,9 +200,7 @@ export function RequestTable({
                 <StatusBadge status={row.status} />
               </td>
               <td>
-                <Link className="btnlink" to={`/requests/${row.id}`}>
-                  Open
-                </Link>
+                <Link className="link" to={`/requests/${row.id}`}>View</Link>
               </td>
             </tr>
           ))}
@@ -376,3 +374,4 @@ function NewRequestDialog({
     </Modal>
   )
 }
+

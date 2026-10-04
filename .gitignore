@@ -17,6 +17,7 @@ htmlcov/
 # Node
 node_modules/
 frontend/dist/
+frontend/.vitest/
 *.tsbuildinfo
 
 # Agent runner state (see AUTOMATION.md)

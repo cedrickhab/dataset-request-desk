@@ -3,9 +3,9 @@
  *
  * Counts here are derived from the request list the viewer can already see,
  * so a client's dashboard is scoped by the same server-side filter as their
- * list. Nothing on this page calls the analytics endpoint: a client has no
- * access to it, and showing staff aggregates here would be a second, parallel
- * definition of the same numbers.
+ * list. The episode-quality chart calls the staff-only quality-series
+ * endpoint and is rendered for staff only: a client's dashboard stays inside
+ * their own permissions.
  */
 
 import { Link } from 'react-router-dom'
@@ -14,8 +14,9 @@ import { api } from '../api/client'
 import { useAsync } from '../api/useAsync'
 import type { DatasetRequest, RequestStatus } from '../api/types'
 import { useRoles } from '../auth/useAuth'
-import { Icon } from '../components/Icon'
+import { EpisodeQualityCard } from '../components/EpisodeQualityCard'
 import { QualityDonut } from '../components/QualityDonut'
+import { Icon, type IconName } from '../components/Icon'
 import {
   BarRow,
   EmptyState,
@@ -42,6 +43,16 @@ const LABELS: Record<RequestStatus, string> = {
   rejected: 'Rejected',
 }
 
+// Semantic status colours of the approved design. Amber is never used here:
+// it is reserved for branding, primary actions and selected navigation.
+const PIPELINE_COLORS: Record<RequestStatus, string> = {
+  submitted: '#8996AA',
+  in_progress: '#3B92F6',
+  delivered: '#37C9E6',
+  accepted: '#4DCD87',
+  rejected: '#F46676',
+}
+
 export function Dashboard() {
   const { isStaff, isClient } = useRoles()
 
@@ -56,26 +67,15 @@ export function Dashboard() {
     ) }
   }, [])
   const episodes = useAsync(
-    () => (isStaff ? api.listEpisodes({ available: true, page_size: 1 }) : Promise.resolve(null)),
-    [isStaff],
-  )
-
-  // Quality mix for the donut. Four count-only requests (page_size=1 returns
-  // one row and the total), which is the "reuse scoped list data" the plan
-  // asks for rather than inventing a second analytics surface a client could
-  // not reach anyway. Staff only.
-  const quality = useAsync(
     () =>
       isStaff
         ? Promise.all([
+            api.listEpisodes({ page_size: 1 }),
+            api.listEpisodes({ available: true, page_size: 1 }),
+            api.listEpisodes({ quality: 'bad', page_size: 1 }),
             api.listEpisodes({ quality: 'good', page_size: 1 }),
             api.listEpisodes({ quality: 'usable', page_size: 1 }),
-            api.listEpisodes({ quality: 'bad', page_size: 1 }),
-          ]).then(([good, usable, bad]) => ({
-            good: good.count,
-            usable: usable.count,
-            bad: bad.count,
-          }))
+          ])
         : Promise.resolve(null),
     [isStaff],
   )
@@ -95,69 +95,125 @@ export function Dashboard() {
   const total = requests.data.count
   const countOf = (status: RequestStatus) => requests.data?.statusCounts[status] ?? 0
 
+  // One common scale for the pipeline rows: relative to the largest current
+  // count, never the total, so a single dominant status cannot flatten the
+  // others into invisibility. Zero-count rows stay listed.
+  const largest = Math.max(1, ...PIPELINE.map((status) => countOf(status)))
+
+  const inventory = episodes.data
+  // Exact derivation from three real server counts: every episode is either
+  // reserved (only good/usable can be), available (unreserved, assignable) or
+  // an unreserved bad-quality row, so reserved = total - available - bad.
+  const totalEpisodes = inventory ? inventory[0].count : null
+  const allocatedEpisodes =
+    inventory && totalEpisodes !== null
+      ? Math.max(0, totalEpisodes - inventory[1].count - inventory[2].count)
+      : null
+
+  // Donut slices come from real per-quality server counts, never from the
+  // derived allocation figures above.
+  const qualityCounts = inventory
+    ? { good: inventory[3]?.count ?? 0, usable: inventory[4]?.count ?? 0, bad: inventory[2]?.count ?? 0 }
+    : { good: 0, usable: 0, bad: 0 }
+
+  const staffCards: { label: string; value: React.ReactNode; hint: string; icon: IconName }[] =
+    [
+      {
+        label: 'Episodes',
+        value: totalEpisodes ?? '—',
+        hint: 'In the inventory',
+        icon: 'database',
+      },
+      {
+        label: 'Requests',
+        value: total,
+        hint: 'Across the workspace',
+        icon: 'clipboard-list',
+      },
+      {
+        label: 'Allocated',
+        value: allocatedEpisodes ?? '—',
+        hint: 'Reserved for requests',
+        icon: 'layers',
+      },
+      {
+        label: 'Delivered',
+        value: countOf('delivered'),
+        hint: 'Awaiting client review',
+        icon: 'package-check',
+      },
+    ]
+
+  const clientCards: { label: string; value: React.ReactNode; hint: string; icon: IconName }[] =
+    [
+      { label: 'Requests', value: total, hint: 'Your requests', icon: 'clipboard-list' },
+      {
+        label: 'In progress',
+        value: countOf('in_progress'),
+        hint: 'Being prepared by operations',
+        icon: 'clock',
+      },
+      {
+        label: 'Awaiting review',
+        value: countOf('delivered'),
+        hint: 'Delivered to you',
+        icon: 'package-check',
+      },
+      {
+        label: 'Accepted',
+        value: countOf('accepted'),
+        hint: 'Approved deliveries',
+        icon: 'circle-check',
+      },
+    ]
+
+  const cards = isStaff ? staffCards : clientCards
+
   return (
     <>
       <PageHeading
         title="Overview"
         subtitle={
           isStaff
-            ? 'A clear view of requests and available data.'
+            ? 'Workspace activity at a glance.'
             : 'Your dataset requests, from submission to approval.'
         }
         action={
-          isClient ? (
-            <Link className="btnlink" to="/requests">
-              <Icon name="plus" size={14} /> New request
-            </Link>
-          ) : (
-            <Link className="btnlink" to="/requests">
-              View requests
-            </Link>
-          )
+          <Link className="btnlink primary" to="/requests">
+            {isClient ? (
+              <>
+                <Icon name="plus" size={14} /> New request
+              </>
+            ) : (
+              'View requests'
+            )}
+          </Link>
         }
       />
 
       <div className="cards">
-        <MetricCard
-          label="Total requests"
-          value={total}
-          hint={isStaff ? 'Across the workspace' : 'Your requests'}
-        />
-        <MetricCard
-          label="In progress"
-          value={countOf('in_progress')}
-          hint="Being prepared by operations"
-        />
-        <MetricCard
-          label="Awaiting review"
-          value={countOf('delivered')}
-          hint="Delivered to clients"
-        />
-        {isStaff ? (
+        {cards.map((card) => (
           <MetricCard
-            label="Available episodes"
-            value={episodes.data ? episodes.data.count : '—'}
-            hint="Good or usable, unassigned"
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            hint={card.hint}
+            icon={card.icon}
           />
-        ) : (
-          <MetricCard
-            label="Accepted"
-            value={countOf('accepted')}
-            hint="Approved deliveries"
-          />
-        )}
+        ))}
       </div>
 
       <div className="split">
         <section className="panel">
-          <div className="row between">
-            <h2>Request pipeline</h2>
-            <small>Current status</small>
-          </div>
-          {rows.length === 0 ? (
+          <h2>Request pipeline</h2>
+          <p className="sub">Current status of dataset requests.</p>
+          {total === 0 ? (
             <EmptyState>
-              {isClient ? <Link to="/requests">Create your first request</Link>
-                : <Link to="/episodes">Import episodes to prepare for client requests</Link>}
+              {isClient ? (
+                <Link to="/requests">Create your first request</Link>
+              ) : (
+                <Link to="/episodes">Import episodes to prepare for client requests</Link>
+              )}
             </EmptyState>
           ) : (
             PIPELINE.map((status) => (
@@ -165,7 +221,8 @@ export function Dashboard() {
                 key={status}
                 label={LABELS[status]}
                 value={countOf(status)}
-                max={total}
+                max={largest}
+                color={PIPELINE_COLORS[status]}
               />
             ))
           )}
@@ -174,17 +231,10 @@ export function Dashboard() {
         <section className="panel">
           <h2>{isStaff ? 'Episode quality' : 'How your request moves'}</h2>
           {isStaff ? (
-            quality.data ? (
-              <>
-                <QualityDonut counts={quality.data} />
-                {quality.data.good + quality.data.usable + quality.data.bad === 0
-                  ? <Link className="btnlink" to="/episodes">Import episode CSV</Link> : null}
-              </>
-            ) : quality.error ? (
-              <ErrorBox message={quality.error} onRetry={quality.reload} />
-            ) : (
-              <Loading label="Counting episodes" />
-            )
+            <>
+              <p className="sub">Imported episodes by quality.</p>
+              <QualityDonut counts={qualityCounts} />
+            </>
           ) : (
             <>
               <ol className="muted">
@@ -201,6 +251,8 @@ export function Dashboard() {
           )}
         </section>
       </div>
+
+      {isStaff ? <EpisodeQualityCard /> : null}
 
       <section className="panel">
         <div className="row between">

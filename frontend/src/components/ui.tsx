@@ -13,7 +13,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 import { statusLabel, titleCase, type BadgeKind } from './format'
 import type { Quality, RequestStatus } from '../api/types'
 
@@ -273,28 +273,44 @@ export function MetricCard({
   label,
   value,
   hint,
+  icon,
 }: {
   label: string
   value: ReactNode
   hint?: string | undefined
+  icon?: IconName | undefined
 }) {
   return (
     <div className="card">
-      <small>{label}</small>
+      <div className="card-head">
+        <small>{label}</small>
+        {icon ? (
+          <span className="card-icon" aria-hidden="true">
+            <Icon name={icon} size={16} />
+          </span>
+        ) : null}
+      </div>
       <div className="metric">{value}</div>
       {hint ? <small>{hint}</small> : null}
     </div>
   )
 }
 
+/**
+ * One thin horizontal bar. The colour is semantic (request status), passed by
+ * the caller; the scale is common across every row in the chart, so `max` is
+ * the largest current count rather than the total.
+ */
 export function BarRow({
   label,
   value,
   max,
+  color,
 }: {
   label: ReactNode
   value: number
   max: number
+  color?: string | undefined
 }) {
   const width = max > 0 ? (value / max) * 100 : 0
   return (
@@ -304,7 +320,12 @@ export function BarRow({
         <strong>{value}</strong>
       </div>
       <div className="bar">
-        <i style={{ width: `${String(width)}%` }} />
+        <i
+          style={{
+            width: `${String(width)}%`,
+            ...(color ? { background: color } : {}),
+          }}
+        />
       </div>
     </div>
   )

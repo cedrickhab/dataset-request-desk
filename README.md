@@ -152,12 +152,12 @@ Either half alone:
 
 ```bash
 docker compose -f compose.test.yaml run --rm --build check           # backend
-docker compose -f compose.test.yaml run --rm check-frontend          # frontend
+docker compose -f compose.test.yaml build check-frontend             # frontend
 ```
 
 ### What is covered
 
-**266 tests: 226 backend, 40 frontend.** The choice of what to test follows the
+**295 tests: 246 backend, 49 frontend.** The choice of what to test follows the
 brief's priorities — authorization, status transitions, assignment rules and
 import idempotency — rather than chasing a coverage number.
 
@@ -168,11 +168,12 @@ import idempotency — rather than chasing a coverage number.
 | Assignment | 24 | **two threads on separate connections racing for one episode**; delivery cannot race a concurrent removal; all-or-nothing batches |
 | CSV import | 53 | idempotency across three runs; conflict never overwrites; `NaN`/`Infinity` rejection; one bad row does not discard good rows |
 | Analytics | 27 | window boundaries; even and odd medians; null not zero; a query-count guard that fails if aggregation moves into Python |
+| Import quality series | 20 | Kigali boundaries; staff-only access; successful imports only; unavailable history versus zero days; index migration consistency |
 | Export jobs | 26 | stale claim token discarded; expired lease reclaimed; completed job never reruns |
 | Operability | 20 | exactly one log line per request; no query string or password in logs; sanitized 503 |
 | Query cost | 4 | every list endpoint stays at 4 queries when its row count grows 10x |
 | Demo seed | 10 | supplied CSV; reruns; collision safety; preserved records; ownership; workflow actors and delivery counts |
-| Frontend | 40 | CSRF handshake; session expiry; server-driven actions; conflict recovery; account keyboard controls; export polling; status totals beyond page one |
+| Frontend | 49 | CSRF handshake; session expiry; server-driven actions; conflict recovery; account keyboard controls; export polling; status totals beyond page one; quality ranges/input controls; canvas cleanup |
 
 The backend suite requires **real PostgreSQL**. The locking under test
 (`SELECT FOR UPDATE`, `SKIP LOCKED`) does not exist on SQLite, so passing there
@@ -225,6 +226,20 @@ How each case in the supplied file is handled, and why, is in
 ---
 
 ## Analytics
+
+The staff dashboard uses `GET /api/analytics/episode-quality?start=YYYY-MM-DD&end=YYYY-MM-DD`
+for three quality series: Good (green), Usable (blue), and Bad (red). The
+7/30/90-day selector ends on today's **Africa/Kigali** calendar date. Counts
+use persisted `imported_at` timestamps and database aggregation in
+`BUSINESS_TIME_ZONE` (default `Africa/Kigali`), with an index added by migration
+`0003_episode_episode_imported_at`. Duplicate, conflicting and invalid CSV
+rows do not add episodes and cannot inflate counts. No historical imports are
+generated: dates before the first import are omitted, later days without imports
+are zero, and a single date renders points. Hover or tap for shared counts;
+keyboard users can focus the chart and use arrows, Home, End and Escape.
+A screen-reader summary and daily data table expose the same values.
+
+The existing analytics report below retains its recording-date/UTC semantics.
 
 `GET /api/analytics?start=2026-08-01&end=2026-09-30` (staff only) returns
 episodes per day per robot, request counts by status, the median
@@ -344,6 +359,7 @@ Prefix `/api`, JSON, UUID identifiers, ISO-8601 UTC timestamps. Errors are
 | `GET /episodes` | staff | `task_name`, `quality`, `available` |
 | `POST /episodes/import` | staff | multipart; 10 MB and 100k row caps |
 | `GET /analytics` | staff | `start`, `end` |
+| `GET /analytics/episode-quality` | staff | `start`, `end`; successful imports by Kigali day and quality |
 | `GET /users` · `POST /users` · `PATCH /users/{id}` | admin | |
 | `GET /health` | any active user | 200, or 503 if the database is unreachable |
 | `GET /api/schema` · `GET /api/docs` | any active user | OpenAPI, generated from the serializers |

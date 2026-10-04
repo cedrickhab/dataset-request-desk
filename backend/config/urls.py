@@ -42,6 +42,11 @@ api_patterns = [
     path("episodes", desk_views.EpisodeListView.as_view(), name="episode-list"),
     path("episodes/import", desk_views.EpisodeImportView.as_view(), name="episode-import"),
     path("analytics", desk_views.AnalyticsView.as_view(), name="analytics"),
+    path(
+        "analytics/episode-quality",
+        desk_views.EpisodeQualitySeriesView.as_view(),
+        name="episode-quality-series",
+    ),
     path("users", account_views.UserListCreateView.as_view(), name="user-list"),
     path("users/<uuid:user_id>", account_views.UserDetailView.as_view(), name="user-detail"),
     # Schema and docs require a session: SPECTACULAR_SETTINGS sets

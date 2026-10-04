@@ -319,6 +319,25 @@ class AnalyticsView(APIView):
         return Response(analytics_service.build_report(window))
 
 
+class EpisodeQualitySeriesView(APIView):
+    """Daily Good/Usable/Bad successful-import counts for the dashboard chart.
+
+    A narrow extension of the analytics surface, with the same restrictions:
+    staff-only, date validation shared with /api/analytics, aggregation in
+    PostgreSQL, and semantics returned in the response body.
+    """
+
+    permission_classes = [IsStaff]
+
+    def get(self, request):
+        serializer = AnalyticsQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        window = analytics_service.Window(
+            start=serializer.validated_data["start"], end=serializer.validated_data["end"]
+        )
+        return Response(analytics_service.quality_series(window))
+
+
 def _get_visible_or_404(user, request_id) -> DatasetRequest:
     from rest_framework.exceptions import NotFound
 
