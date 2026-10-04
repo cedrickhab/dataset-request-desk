@@ -239,6 +239,15 @@ input[aria-invalid='true'],select[aria-invalid='true'],textarea[aria-invalid='tr
 .account-panel button{width:100%}
 
 /* --- Range selector + quality line chart ------------------------------------------- */
+.quality-donut-layout{display:flex;align-items:center;gap:24px;margin:8px 0 12px}
+.donut{position:relative;display:grid;place-items:center;width:150px;aspect-ratio:1;flex:none;border-radius:50%}
+.donut::before{content:'';position:absolute;inset:21%;border-radius:50%;background:var(--card)}
+.donut>span{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.donut>span strong{font-size:22px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.donut>span small{font-size:10px;text-transform:uppercase;color:var(--faint)}
+.donut-legend{flex:1;min-width:0;list-style:none;margin:0;padding:0}
+.donut-legend li{gap:8px;padding:5px 0}
+.donut-legend .badge{padding:2px 8px}
 .range-toggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--input)}
 .range-toggle button{border:0;background:transparent;border-radius:0;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted)}
 .range-toggle button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
@@ -284,6 +293,8 @@ input[aria-invalid='true'],select[aria-invalid='true'],textarea[aria-invalid='tr
   .cards{gap:10px}
   .card{padding:14px}
   .info{grid-template-columns:1fr 1fr}
+  .quality-donut-layout{gap:18px}
+  .donut{width:132px}
   .formgrid{grid-template-columns:1fr}
   .toast{left:15px;right:15px;bottom:15px}
   .modal{padding:18px}
