@@ -11,6 +11,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth, useRoles } from '../auth/useAuth'
 import { Icon, type IconName } from './Icon'
 import { Spinner } from './ui'
+import { AccountPopover } from './AccountPopover'
 
 interface NavItem {
   to: string
@@ -33,7 +34,7 @@ const CLIENT_NAV: NavItem[] = [
 ]
 
 export function Shell() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { isStaff, isAdmin } = useRoles()
   const location = useLocation()
 
@@ -87,32 +88,13 @@ export function Shell() {
       <div className="workspace">
         <header className="topbar">
           <span className="muted">Workspace / {current}</span>
-          <div className="row">
-            <div className="avatar" aria-hidden="true">
-              {user.name.slice(0, 1)}
-            </div>
-            <div>
-              <strong style={{ fontSize: 12 }}>{user.name}</strong>
-              <br />
-              <small>
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                {user.organisation ? ` · ${user.organisation}` : ''}
-              </small>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                void logout()
-              }}
-            >
-              <Icon name="log-out" size={15} /> Sign out
-            </button>
-          </div>
+          <AccountPopover />
         </header>
 
         <main className="main" id="main">
           <Outlet />
         </main>
+        <footer className="workspace-footer">Dataset Request Desk</footer>
       </div>
     </div>
   )

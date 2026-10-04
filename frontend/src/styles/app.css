@@ -1,10 +1,9 @@
 /* Dataset Request Desk theme.
  *
- * Carried over verbatim from prototype/index.html, which is the approved
+ * Based on prototype/index.html, which is the approved
  * visual specification: white surfaces, amber accents, the same spacing,
- * grids, table density and dialog geometry. Colours, radii and breakpoints
- * are unchanged on purpose - this file is the contract with the design, so
- * edits here should be deliberate rather than incidental.
+ * grids, table density and dialog geometry. Compact login and account
+ * disclosure refinements are kept below the original layout rules.
  *
  * Additions below the marker cover states the static prototype did not need:
  * loading, empty and error states, focus-visible on new controls, and
@@ -110,3 +109,45 @@ input[aria-invalid='true'],select[aria-invalid='true'],textarea[aria-invalid='tr
   .sidebar nav{flex-direction:row;flex-wrap:wrap;gap:4px}
   .nav{display:inline-flex;width:auto;padding:8px;margin-bottom:0}
 }
+
+/* Compact credentials and public demo selector; natural scrolling is retained. */
+.login{min-height:100dvh}
+.story{background:var(--pale)}
+.story h1{margin-top:24px}
+.login-right{padding:24px 32px;min-width:0}
+.login-form{width:460px;max-width:100%;min-width:0}
+.login-form label{margin-top:10px}
+.login-form input{padding:9px 10px}
+.login-form .error:empty{margin:0}
+.demos{margin-top:18px;padding-top:14px}
+.demos h3{margin-bottom:2px}
+.demo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.demo{margin:0;min-width:0;padding:9px;gap:4px;align-items:flex-start;flex-direction:column}
+.demo small{overflow-wrap:anywhere}
+.demo .badge{padding:1px 6px;font-size:10px}
+.demo[aria-pressed=true]{border-color:var(--accent);background:var(--pale)}
+.login-footer,.workspace-footer{color:var(--muted);font-size:11px}
+.login-footer{margin-top:18px;text-align:center}
+.workspace{display:flex;flex-direction:column}
+.workspace-footer{padding:16px 28px;margin-top:auto;border-top:1px solid var(--line)}
+button:hover:not(:disabled),.btnlink:hover{background:var(--pale);color:var(--accent);border-color:var(--gold)}
+button.primary:hover:not(:disabled),.btnlink.primary:hover{background:var(--accent);color:white}
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+.avatar{background:var(--pale);color:var(--accent)}
+.account{position:relative;min-width:0}
+.account-trigger{display:flex;align-items:center;gap:9px;text-align:left;border-color:transparent;padding:5px 8px;font-size:12px}
+.account-trigger small{display:block;font-weight:400;text-transform:capitalize}
+.account-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:290px;max-width:calc(100vw - 24px);padding:18px;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px #25304418;overflow-wrap:anywhere}
+.account-panel dl{margin:12px 0}
+.account-panel dt{font-size:11px;color:var(--muted)}
+.account-panel dd{margin:0 0 8px;font-size:13px}
+@media(max-width:650px){
+  .login-right{padding:22px}
+  .story h1{margin-top:18px}
+  .story p{margin-bottom:0}
+  .topbar{align-items:flex-start}
+  .account-trigger{overflow-wrap:anywhere}
+  .workspace-footer{padding:14px 18px}
+}
+@media(max-width:380px){.demo-grid{grid-template-columns:1fr}}

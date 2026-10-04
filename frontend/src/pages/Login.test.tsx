@@ -6,7 +6,7 @@
  * refusing those endpoints is covered by the backend suite.
  */
 
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -38,6 +38,23 @@ function anonymous(overrides = {}) {
 }
 
 describe('login form', () => {
+  it.each([
+    ['Ada Admin', 'admin@example.com', 'admin123'],
+    ['Olu Operator', 'ops1@example.com', 'ops123'],
+    ['Odile Operator', 'ops2@example.com', 'ops123'],
+    ['Acme Robotics', 'client-a@example.com', 'client123'],
+    ['Beta Labs', 'client-b@example.com', 'client123'],
+  ])('selects public demo %s without submitting', async (name, email, password) => {
+    const stub = stubFetch(anonymous())
+    renderWithProviders(<App />, { route: '/', path: '*' })
+    const button = await screen.findByRole('button', { name: new RegExp(name) })
+    button.focus()
+    await userEvent.keyboard('{Enter}')
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Email address')).toHaveValue(email)
+    expect(screen.getByLabelText('Password')).toHaveValue(password)
+    expect(stub.lastCall('/auth/login')).toBeUndefined()
+  })
   it('shows the login screen when there is no session', async () => {
     stubFetch(anonymous())
     renderWithProviders(<App />, { route: '/', path: '*' })
@@ -115,6 +132,32 @@ describe('login form', () => {
 })
 
 describe('navigation by role', () => {
+  it('opens account details by keyboard, dismisses and signs out', async () => {
+    const stub = stubFetch({ ...BASE,
+      'GET /api/auth/me': { body: makeUser() },
+      'POST /api/auth/logout': { status: 204 },
+    })
+    renderWithProviders(<App />, { route: '/', path: '*' })
+    const trigger = await screen.findByRole('button', { name: /Acme Robotics/ })
+    trigger.focus()
+    await userEvent.keyboard('{Enter}')
+    const panel = screen.getByRole('region', { name: 'Account details' })
+    expect(panel).toHaveFocus()
+    expect(within(panel).getByText('client-a@example.com')).toBeInTheDocument()
+    expect(within(panel).getByText('Organisation')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(trigger).toHaveFocus()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(trigger)
+    await userEvent.click(screen.getByText('Workspace / Overview'))
+    expect(screen.queryByRole('region', { name: 'Account details' })).not.toBeInTheDocument()
+    await userEvent.click(trigger)
+    await userEvent.tab()
+    expect(screen.getByRole('button', { name: 'Sign out' })).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+    expect(stub.lastCall('/auth/logout')?.method).toBe('POST')
+  })
   it('shows a client only their own screens', async () => {
     stubFetch({ ...BASE, 'GET /api/auth/me': { body: makeUser({ role: 'client' }) } })
     renderWithProviders(<App />, { route: '/', path: '*' })

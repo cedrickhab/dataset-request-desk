@@ -90,7 +90,6 @@ export function Login() {
       <section className="login-right">
         <div className="login-form">
           <h1>Welcome back</h1>
-          <p className="muted">Sign in to Dataset Desk.</p>
 
           <form onSubmit={onSubmit} noValidate>
             <label htmlFor="email">Email address</label>
@@ -139,11 +138,14 @@ export function Login() {
 
           <section className="demos">
             <h3>Try a demo account</h3>
-            <small>Click an account to fill the credentials, then sign in.</small>
+            <small>Select an account, then sign in.</small>
+            <div className="demo-grid">
             {DEMO_ACCOUNTS.map((account) => (
               <button
                 type="button"
                 className="demo"
+                aria-pressed={email === account.email && password === account.password}
+                disabled={busy}
                 key={account.email}
                 onClick={() => {
                   setEmail(account.email)
@@ -155,13 +157,15 @@ export function Login() {
                   <strong>{account.name}</strong>
                   <br />
                   <small>
-                    {account.email} · {account.password}
+                    {account.email}
                   </small>
                 </span>
                 <Badge kind={account.role} />
               </button>
             ))}
+            </div>
           </section>
+          <footer className="login-footer">Dataset Request Desk</footer>
         </div>
       </section>
     </section>
