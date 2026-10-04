@@ -178,7 +178,7 @@ export const api = {
 
   // --- requests ---
   async listRequests(
-    params: { status?: string; search?: string; page?: number } = {},
+    params: { status?: string; search?: string; page?: number; page_size?: number } = {},
   ): Promise<Paginated<DatasetRequest>> {
     return request<Paginated<DatasetRequest>>(`/api/requests${query(params)}`)
   },

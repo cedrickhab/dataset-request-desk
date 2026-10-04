@@ -45,9 +45,16 @@ const LABELS: Record<RequestStatus, string> = {
 export function Dashboard() {
   const { isStaff, isClient } = useRoles()
 
-  // One page of 100 is enough for the counts on this screen and keeps the
-  // dashboard to a single request. The real totals live in Analytics.
-  const requests = useAsync(() => api.listRequests({ page: 1 }), [])
+  // Count filtered, server-scoped lists, not just statuses on the first page.
+  const requests = useAsync(async () => {
+    const [recent, ...counts] = await Promise.all([
+      api.listRequests({ page: 1 }),
+      ...PIPELINE.map((status) => api.listRequests({ status, page_size: 1 })),
+    ])
+    return { ...recent, statusCounts: Object.fromEntries(
+      PIPELINE.map((status, index) => [status, counts[index]?.count ?? 0]),
+    ) }
+  }, [])
   const episodes = useAsync(
     () => (isStaff ? api.listEpisodes({ available: true, page_size: 1 }) : Promise.resolve(null)),
     [isStaff],
@@ -86,7 +93,7 @@ export function Dashboard() {
 
   const rows: DatasetRequest[] = requests.data.results
   const total = requests.data.count
-  const countOf = (status: RequestStatus) => rows.filter((row) => row.status === status).length
+  const countOf = (status: RequestStatus) => requests.data?.statusCounts[status] ?? 0
 
   return (
     <>
@@ -148,14 +155,17 @@ export function Dashboard() {
             <small>Current status</small>
           </div>
           {rows.length === 0 ? (
-            <EmptyState>Nothing to show yet.</EmptyState>
+            <EmptyState>
+              {isClient ? <Link to="/requests">Create your first request</Link>
+                : <Link to="/episodes">Import episodes to prepare for client requests</Link>}
+            </EmptyState>
           ) : (
             PIPELINE.map((status) => (
               <BarRow
                 key={status}
                 label={LABELS[status]}
                 value={countOf(status)}
-                max={rows.length}
+                max={total}
               />
             ))
           )}
@@ -165,7 +175,11 @@ export function Dashboard() {
           <h2>{isStaff ? 'Episode quality' : 'How your request moves'}</h2>
           {isStaff ? (
             quality.data ? (
-              <QualityDonut counts={quality.data} />
+              <>
+                <QualityDonut counts={quality.data} />
+                {quality.data.good + quality.data.usable + quality.data.bad === 0
+                  ? <Link className="btnlink" to="/episodes">Import episode CSV</Link> : null}
+              </>
             ) : quality.error ? (
               <ErrorBox message={quality.error} onRetry={quality.reload} />
             ) : (

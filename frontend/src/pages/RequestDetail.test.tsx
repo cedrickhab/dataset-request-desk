@@ -6,7 +6,7 @@
  * when the server refuses a stale action.
  */
 
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -380,4 +380,37 @@ describe('assignment dialog', () => {
       await screen.findByText('EP-00001 is already reserved for another request.'),
     ).toBeInTheDocument()
   })
+})
+
+it('polls active export jobs, then stops after completion', async () => {
+  const assignment = {
+    id: 'a-1', episode: makeEpisode(), assigned_by_name: 'Olu Operator',
+    assigned_at: '2026-09-20T09:00:00Z',
+    export_job: { status: 'pending', attempts: 0, max_attempts: 3, last_error: '' },
+  }
+  const responses = routes({
+    'GET /api/requests/r-1/assignments': {
+      body: { results: [assignment], assigned_count: 1, episodes_requested: 2 },
+    },
+  })
+  const stub = stubFetch(responses)
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+  vi.useFakeTimers()
+  try {
+    await act(async () => {
+      renderWithProviders(<RequestDetail />, { route: '/requests/r-1', path: '/requests/:id' })
+      await Promise.resolve()
+    })
+    expect(screen.getByText('Pending')).toBeInTheDocument()
+    assignment.export_job.status = 'completed'
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100) })
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+    const count = stub.calls.filter((call) => call.url.endsWith('/assignments')).length
+    expect(count).toBeGreaterThan(1)
+    await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+    expect(stub.calls.filter((call) => call.url.endsWith('/assignments'))).toHaveLength(count)
+  } finally {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  }
 })
