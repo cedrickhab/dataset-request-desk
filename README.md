@@ -38,11 +38,10 @@ container that must exit successfully before the API and worker start.
 
 Set `WEB_PORT` in `.env` if 8080 is taken.
 
-To stop, and to discard the database volume:
+To stop while keeping local data:
 
 ```bash
-docker compose down            # stop, keep data
-docker compose down --volumes  # stop, delete the database
+docker compose down
 ```
 
 ### Seed accounts
@@ -75,6 +74,47 @@ If either is missing the account is skipped and the demo accounts still work.
 The password is read from the environment straight into Django's password
 hasher. It is never logged, never written to a file, and not in this
 repository. `.env` is gitignored.
+
+### Optional populated demo
+
+PostgreSQL data lives in the local Docker `db_data` volume. Git clone transfers
+code and metadata fixtures, **not that volume or its requests and assignments**.
+Compose automatically migrates and seeds accounts only. Importing episodes alone
+does not create client requests or allocations.
+
+After startup, explicitly opt in:
+
+```bash
+docker compose exec api python manage.py import_episodes /app/seed/episodes.csv
+docker compose exec api python manage.py seed_demo_data
+```
+
+The second command also reuses the supplied CSV importer, so it is safe if the
+first import has already run. On an untouched demo it creates ten requests:
+submitted, in progress, delivered, accepted and rejected for each of the two
+public demo clients. Each asks for two `pick cup` episodes; in-progress examples
+have one allocation and delivered examples have two (14 unique allocations in
+total). These small counts use good/usable rows from the supplied CSV.
+
+The seed registry makes reruns skip previously created requests, including ones
+you subsequently changed. It reports created/skipped/conflicting records; it
+does not adopt colliding identifiers, overwrite work, reset passwords, populate
+personal accounts or reset the database. Changed/missing demo identities abort
+before import. Reserved or conflicting episode rows are left untouched; an
+unfulfillable example is rolled back and reported, while other examples proceed.
+Resolve conflicts manually and rerun; do not delete your volume to seed a demo.
+
+Assignments enqueue the normal simulated export jobs. **Their job statuses can
+change while the worker runs**, including retries and final failure. Request
+statuses are separate, and delivery requires enough assignments, not successful
+exports. No videos or downloadable artifacts are generated. Demo population is
+never an automatic default for other environments.
+
+For handoff archives use tracked files, for example
+`git archive --format=zip --output=../dataset-request-desk-handoff.zip HEAD`.
+Never package the working directory wholesale: the previously shared ZIP included
+`.env`. This checkout ignores and does not track it; keep it out of future ZIPs
+and rotate any real credentials exposed through the earlier archive.
 
 ### A five-minute tour
 

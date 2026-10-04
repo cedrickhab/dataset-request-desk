@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.git
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+frontend/dist
+.agent-runs

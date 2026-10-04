@@ -127,6 +127,16 @@ class DatasetRequest(models.Model):
         return f"{self.task_name} ({self.status})"
 
 
+class DemoSeedRecord(models.Model):
+    """Ownership registry for opt-in demo requests; never adopt existing work."""
+
+    key = models.CharField(primary_key=True, max_length=100)
+    request = models.OneToOneField(DatasetRequest, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.key
+
+
 class Assignment(models.Model):
     """An episode reserved for a request.
 
