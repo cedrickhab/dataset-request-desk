@@ -1,1 +1,0 @@
-Lucide static icons version 1.51.0, obtained from the official lucide-static npm package. Source: https://lucide.dev/ . Original SVG files and license retained. Runtime embeds these paths inline for offline file opening; React implementation should use lucide-react.
