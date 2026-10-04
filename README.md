@@ -157,7 +157,7 @@ docker compose -f compose.test.yaml run --rm check-frontend          # frontend
 
 ### What is covered
 
-**248 tests: 216 backend, 32 frontend.** The choice of what to test follows the
+**266 tests: 226 backend, 40 frontend.** The choice of what to test follows the
 brief's priorities — authorization, status transitions, assignment rules and
 import idempotency — rather than chasing a coverage number.
 
@@ -171,7 +171,8 @@ import idempotency — rather than chasing a coverage number.
 | Export jobs | 26 | stale claim token discarded; expired lease reclaimed; completed job never reruns |
 | Operability | 20 | exactly one log line per request; no query string or password in logs; sanitized 503 |
 | Query cost | 4 | every list endpoint stays at 4 queries when its row count grows 10x |
-| Frontend | 32 | CSRF handshake; session expiry; actions driven by the server; conflict recovery |
+| Demo seed | 10 | supplied CSV; reruns; collision safety; preserved records; ownership; workflow actors and delivery counts |
+| Frontend | 40 | CSRF handshake; session expiry; server-driven actions; conflict recovery; account keyboard controls; export polling; status totals beyond page one |
 
 The backend suite requires **real PostgreSQL**. The locking under test
 (`SELECT FOR UPDATE`, `SKIP LOCKED`) does not exist on SQLite, so passing there
@@ -179,7 +180,8 @@ would prove nothing. Concurrency tests use `transaction=True` so each thread
 gets its own connection.
 
 Export tests inject a deterministic simulator — no test sleeps for 2–5 seconds
-or depends on a 20% chance. The real timing was exercised by hand; see NOTES.md.
+or depends on a 20% chance. Live worker and desktop browser checks from the
+correction pass are recorded in [the correction review](docs/CORRECTIONS.md).
 
 ---
 
@@ -311,10 +313,11 @@ count alone. That is a deliberate MVP policy, not an oversight: jobs here
 simulate processing, and letting a simulated failure block a real delivery
 would be the wrong trade.
 
-Verified against the running stack: with the worker stopped, six assignments
-queued durably as `pending`; on restart all six completed, and the random
-failure genuinely fired — one job succeeded on its 3rd attempt, another on its
-2nd.
+During the correction pass, the local seed created ten requests and fourteen
+normal export jobs; a second run skipped all ten requests. The worker startup
+and processing were observed in container logs. Retry, lease recovery and
+idempotency also have deterministic PostgreSQL tests. A read-only check found all
+14 seed jobs completed: 11 on the first attempt and 3 on the second.
 
 ---
 
@@ -401,7 +404,7 @@ than a page; its scaling is discussed above.
   anonymous) and `request_id`. The `request_id` also comes back in the
   `X-Request-ID` header so a user-reported error can be found in the logs.
   **Paths are logged without query strings**, so filter values cannot leak.
-  Verified: no seed password or environment secret appears in any container log.
+  Regression tests check that request logging excludes credentials and query strings.
 
 ---
 
@@ -413,8 +416,8 @@ backend/
   accounts/      custom user, permissions, authentication, admin services
   desk/          models, serializers, views
     services/    workflow, assignments, csv_import, analytics, exports
-    management/  seed_users, import_episodes, run_export_worker
-  tests/         212 tests
+    management/  seed_users, import_episodes, seed_demo_data, run_export_worker
+  tests/         PostgreSQL domain, auth, import, job and demo-seed tests
 frontend/src/
   api/           typed client, CSRF handling, fetch hook
   auth/          session provider and role hooks
