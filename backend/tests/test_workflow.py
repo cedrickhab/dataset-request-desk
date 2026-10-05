@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -126,9 +126,9 @@ class TestOwnership:
         older = make_request(client_a, status=RequestStatus.DELIVERED)
         newer = make_request(client_a, status=RequestStatus.DELIVERED)
         make_request(client_b, status=RequestStatus.DELIVERED)
-        older.first_delivered_at = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        older.first_delivered_at = datetime(2026, 10, 1, tzinfo=UTC)
         older.save(update_fields=["first_delivered_at"])
-        newer.first_delivered_at = datetime(2026, 10, 2, tzinfo=timezone.utc)
+        newer.first_delivered_at = datetime(2026, 10, 2, tzinfo=UTC)
         newer.save(update_fields=["first_delivered_at"])
 
         body = login(client_a).get(
