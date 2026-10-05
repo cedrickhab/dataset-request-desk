@@ -1,12 +1,4 @@
-﻿/**
- * Split login, matching the approved dark design: dark branding panel on the
- * left with the artwork, credentials on the right.
- *
- * The demo buttons fill the form; they never log in by themselves. These are
- * the seeded reviewer accounts from seed/users.json and are the only
- * credentials shown anywhere in the UI. The personal administrator account is
- * configured from the environment and deliberately absent here.
- */
+﻿/** Split navy-and-white login. Demo rows fill the form but never submit it. */
 
 import { useState, type FormEvent } from 'react'
 
@@ -67,136 +59,135 @@ export function Login() {
 
   return (
     <section className="login">
-      <aside className="story">
-        <div className="logo">
-          <span className="mark">
-            <Icon name="database" size={19} />
-          </span>
-          Dataset Desk
-        </div>
-        <div className="story-watermarks" aria-hidden="true">
-          <span className="watermark watermark-layers"><Icon name="layers" size={44} /></span>
-          <span className="watermark watermark-clipboard"><Icon name="clipboard-list" size={38} /></span>
-          <span className="watermark watermark-chart"><Icon name="chart-no-axes-combined" size={42} /></span>
-          <span className="watermark watermark-package"><Icon name="package-check" size={38} /></span>
-        </div>
-        <div className="story-copy">
-          <p className="eyebrow">THE ROBOTICS DATA WORKSPACE</p>
-          <h1>
-            Your data.
-            <br />
-            One workspace.
-          </h1>
-          <p>Request, manage and deliver robotics datasets, all in one place.</p>
-        </div>
-        {/* Decorative artwork: hidden from assistive tech, never clickable. */}
-        
-        <footer>Dataset Request Desk</footer>
-      </aside>
+      <div className="login-card">
+        <aside className="story">
+          <div className="logo">
+            <span className="mark">
+              <Icon name="database" size={34} />
+            </span>
+            Dataset Desk
+          </div>
+          <div className="story-watermarks" aria-hidden="true">
+            <span className="watermark watermark-layers"><Icon name="layers" size={112} /></span>
+            <span className="watermark watermark-clipboard"><Icon name="clipboard-list" size={100} /></span>
+            <span className="watermark watermark-box"><Icon name="box" size={112} /></span>
+            <span className="watermark watermark-chart"><Icon name="chart-no-axes-combined" size={108} /></span>
+          </div>
+          <div className="story-copy">
+            <p className="eyebrow">THE ROBOTICS DATA WORKSPACE</p>
+            <h1>
+              Your data.
+              <br />
+              One workspace.
+            </h1>
+            <p>
+              Request, manage and deliver robotics
+              <br />
+              datasets, all in one place.
+            </p>
+          </div>
+        </aside>
 
-      <section className="login-right">
-        <div className="login-form">
-          <h1>Welcome back</h1>
-          <p className="muted lede">Sign in to your Dataset Desk workspace.</p>
+        <section className="login-right">
+          <div className="login-form">
+            <header className="login-heading">
+              <h1>Welcome back</h1>
+              <p className="lede">Sign in to your Dataset Desk workspace.</p>
+            </header>
 
-          <form onSubmit={onSubmit} noValidate>
-            <label htmlFor="email">Email address</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              placeholder="you@company.com"
-              required
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value)
-              }}
-            />
-
-            <label htmlFor="password">Password</label>
-            <div className="pwfield">
+            <form onSubmit={onSubmit} noValidate>
+              <label htmlFor="email">Email address</label>
               <input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder="Enter your password"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                placeholder="you@company.com"
                 required
-                value={password}
+                value={email}
                 onChange={(event) => {
-                  setPassword(event.target.value)
+                  setEmail(event.target.value)
                 }}
               />
-              <button
-                type="button"
-                className="pw-toggle"
-                aria-pressed={showPassword}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                onClick={() => {
-                  setShowPassword((visible) => !visible)
-                }}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+
+              <label htmlFor="password">Password</label>
+              <div className="pwfield">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  required
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                  }}
+                />
+                <button
+                  type="button"
+                  className="pw-toggle"
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => {
+                    setShowPassword((visible) => !visible)
+                  }}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              <div className="submitrow">
+                <button
+                  className="primary wide"
+                  type="submit"
+                  disabled={busy}
+                  aria-busy={busy}
+                >
+                  {busy ? <Spinner label="Signing in" /> : 'Sign in'}
+                </button>
+              </div>
+              <div className="error" role="alert">{error}</div>
+            </form>
+
+            <div className="divider" aria-hidden="true">
+              <span>Demo accounts</span>
             </div>
 
-            <div className="submitrow">
-              <button
-                className="primary wide"
-                type="submit"
-                disabled={busy}
-                aria-busy={busy}
-              >
-                {busy ? <Spinner label="Signing in" /> : 'Sign in'}
-              </button>
-            </div>
+            <section className="demos" aria-label="Demo accounts">
+              <p className="demo-helper">Select an account to fill the form, then sign in.</p>
+              <ul className="demo-list">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <li key={account.email}>
+                    <button
+                      type="button"
+                      className={`demo demo-${account.role}`}
+                      aria-pressed={
+                        email === account.email && password === account.password
+                      }
+                      disabled={busy}
+                      onClick={() => {
+                        setEmail(account.email)
+                        setPassword(account.password)
+                        setError('')
+                      }}
+                    >
+                      <span className="demo-avatar" aria-hidden="true">{account.name.charAt(0)}</span>
+                      <span className="demo-account-copy">
+                        <strong>{account.name}</strong>
+                        <span className="demo-email">{account.email}</span>
+                      </span>
+                      <Badge kind={account.role} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
-            {/* role="alert" so the failure is announced, not just shown. The
-                element keeps its place in the layout so an arriving error does
-                not push the demo list down. */}
-            <div className="error" role="alert">
-              {error}
-            </div>
-          </form>
-
-          <div className="divider" aria-hidden="true">
-            or try a demo account
+            <footer className="login-footer"><span>Dataset Request Desk</span></footer>
           </div>
-
-          <section className="demos" aria-label="Demo accounts">
-            <h3>Demo accounts</h3>
-            <small>Select an account to fill the form, then sign in.</small>
-            <ul className="demo-list">
-              {DEMO_ACCOUNTS.map((account) => (
-                <li key={account.email}>
-                  <button
-                    type="button"
-                    className="demo"
-                    aria-pressed={
-                      email === account.email && password === account.password
-                    }
-                    disabled={busy}
-                    onClick={() => {
-                      setEmail(account.email)
-                      setPassword(account.password)
-                      setError('')
-                    }}
-                  >
-                    <span>
-                      <strong>{account.name}</strong>
-                      <span className="demo-email">{account.email}</span>
-                    </span>
-                    <Badge kind={account.role} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <footer className="login-footer">Dataset Request Desk</footer>
-        </div>
-      </section>
+        </section>
+      </div>
     </section>
   )
 }

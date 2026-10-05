@@ -11,7 +11,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from '../App'
-import { makeUser, paginated, renderWithProviders, stubFetch } from '../test/helpers'
+import { makeUser, paginated, renderWithProviders, stubFetch, urlOf } from '../test/helpers'
 
 // These tests exercise authentication, not drawing. jsdom has no 2D context;
 // sizing/drawing lifecycle is covered in LoginParticleWave.test.tsx and Chrome.
@@ -133,6 +133,77 @@ describe('login form', () => {
     expect(screen.getByLabelText('Password')).toHaveValue('ops123')
     // Filling the fields must not be a login by itself.
     expect(stub.calls.filter((call) => call.url.includes('/auth/login'))).toHaveLength(0)
+  })
+
+  it('toggles password visibility with an accessible control', async () => {
+    stubFetch(anonymous())
+    renderWithProviders(<App />, { route: '/', path: '*' })
+
+    const password = await screen.findByLabelText('Password')
+    expect(password).toHaveAttribute('type', 'password')
+    await userEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(password).toHaveAttribute('type', 'text')
+    await userEvent.click(screen.getByRole('button', { name: 'Hide password' }))
+    expect(password).toHaveAttribute('type', 'password')
+  })
+
+  it('shows a readable connection error when login fetch rejects', async () => {
+    vi.stubGlobal('fetch', vi.fn((input: string | URL | Request) => {
+      const url = new URL(urlOf(input), 'http://localhost')
+      if (url.pathname === '/api/auth/me') {
+        return Promise.resolve(new Response(JSON.stringify({
+          error: { code: 'unauthenticated', message: 'Authentication is required.' },
+          request_id: null,
+        }), { status: 401, headers: { 'Content-Type': 'application/json' } }))
+      }
+      if (url.pathname === '/api/auth/csrf') {
+        return Promise.resolve(new Response(JSON.stringify({ csrf_token: 'test-csrf' })))
+      }
+      return Promise.reject(new TypeError('Network unavailable'))
+    }))
+    renderWithProviders(<App />, { route: '/', path: '*' })
+
+    await userEvent.type(await screen.findByLabelText('Email address'), 'user@example.com')
+    await userEvent.type(screen.getByLabelText('Password'), 'bad-password')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not sign in. Check your connection and try again.',
+    )
+  })
+
+  it('disables sign-in while the request is pending', async () => {
+    let resolveLogin: ((response: Response) => void) | undefined
+    const pendingLogin = new Promise<Response>((resolve) => {
+      resolveLogin = resolve
+    })
+    vi.stubGlobal('fetch', vi.fn((input: string | URL | Request) => {
+      const url = new URL(urlOf(input), 'http://localhost')
+      if (url.pathname === '/api/auth/me') {
+        return Promise.resolve(new Response(JSON.stringify({
+          error: { code: 'unauthenticated', message: 'Authentication is required.' },
+          request_id: null,
+        }), { status: 401, headers: { 'Content-Type': 'application/json' } }))
+      }
+      if (url.pathname === '/api/auth/csrf') {
+        return Promise.resolve(new Response(JSON.stringify({ csrf_token: 'test-csrf' })))
+      }
+      if (url.pathname === '/api/auth/login') return pendingLogin
+      return Promise.resolve(new Response(JSON.stringify({ count: 0, results: [], next: null, previous: null })))
+    }))
+    renderWithProviders(<App />, { route: '/', path: '*' })
+
+    await userEvent.type(await screen.findByLabelText('Email address'), 'client-a@example.com')
+    await userEvent.type(screen.getByLabelText('Password'), 'client123')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    const signIn = screen.getByRole('button', { name: 'Signing in' })
+    expect(signIn).toBeDisabled()
+    expect(signIn).toHaveAttribute('aria-busy', 'true')
+
+    resolveLogin?.(new Response(JSON.stringify(makeUser({ role: 'client' })), {
+      headers: { 'Content-Type': 'application/json' },
+    }))
+    expect(await screen.findByText('Workspace / Overview')).toBeInTheDocument()
   })
 })
 

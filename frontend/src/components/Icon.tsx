@@ -4,7 +4,7 @@
  * The icon set is Lucide (ISC), taken from the same official SVG files the
  * prototype bundles; prototype/icons/LICENSE.txt is retained in the repo.
  *
- * These twelve paths are inlined rather than pulled from lucide-react on
+ * These paths are inlined rather than pulled from lucide-react on
  * purpose. The whole set below is about 1.5 KB of markup, where the package
  * adds a dependency and more bytes than the icons themselves. Our users are
  * on metered mobile data, so bundle weight is a product decision here.
@@ -15,6 +15,7 @@ import type { JSX } from 'react'
 
 export type IconName =
   | 'arrow-left'
+  | 'box'
   | 'chart-no-axes-combined'
   | 'circle-check'
   | 'clipboard-list'
@@ -33,6 +34,14 @@ export type IconName =
   | 'x'
 
 const PATHS: Record<IconName, JSX.Element> = {
+  'box': (
+    <>
+      <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+      <path d="m3 8 9 5 9-5" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </>
+  ),
   'arrow-left': (
     <>
       <path d="m12 19-7-7 7-7" />
