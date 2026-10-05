@@ -19,6 +19,7 @@ import type {
   Episode,
   ImportSummary,
   Paginated,
+  QualitySeries,
   Role,
   StatusHistoryEntry,
   User,
@@ -256,8 +257,15 @@ export const api = {
     return request<Analytics>(`/api/analytics${query({ start, end })}`)
   },
 
+  /** Staff-only daily Good/Usable/Bad import counts for the dashboard chart. */
+  async episodeQuality(start: string, end: string): Promise<QualitySeries> {
+    return request<QualitySeries>(`/api/analytics/episode-quality${query({ start, end })}`)
+  },
+
   // --- users ---
-  async listUsers(params: { search?: string; page?: number } = {}): Promise<Paginated<User>> {
+  async listUsers(
+    params: { search?: string; page?: number; page_size?: number } = {},
+  ): Promise<Paginated<User>> {
     return request<Paginated<User>>(`/api/users${query(params)}`)
   },
 

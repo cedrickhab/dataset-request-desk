@@ -16,6 +16,8 @@ services:
       POSTGRES_USER: dataset_desk
       # Throwaway credentials for an ephemeral, never-published container.
       POSTGRES_PASSWORD: test-only-password
+    ports:
+      - "5433:5432"
     # In-memory: faster, and guarantees nothing survives the run.
     tmpfs:
       - /var/lib/postgresql/data

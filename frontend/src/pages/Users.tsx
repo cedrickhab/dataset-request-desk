@@ -27,7 +27,7 @@ import {
   Toast,
 } from '../components/ui'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const ROLES: Role[] = ['client', 'operator', 'admin']
 
 export function Users() {
@@ -40,7 +40,10 @@ export function Users() {
   const [actionError, setActionError] = useState('')
   const [toast, setToast] = useState('')
 
-  const state = useAsync(() => api.listUsers({ page, search }), [page, search])
+  const state = useAsync(
+    () => api.listUsers({ page, page_size: PAGE_SIZE, search }),
+    [page, search],
+  )
 
   async function toggleActive(target: User) {
     setPending(target.id)

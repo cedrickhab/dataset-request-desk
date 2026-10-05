@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Request list. One component for both audiences: staff see every request
  * plus a client column, a client sees only their own because the server
  * filters the queryset, not because this file hides rows.
  */
 
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { api, ApiError } from '../api/client'
 import { errorMessage, useAsync } from '../api/useAsync'
@@ -29,7 +29,7 @@ import {
   isoDay,
 } from '../components/format'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 
 const STATUSES: RequestStatus[] = [
   'submitted',
@@ -41,14 +41,15 @@ const STATUSES: RequestStatus[] = [
 
 export function Requests() {
   const { isStaff, isClient } = useRoles()
+  const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? '')
   const [search, setSearch] = useState('')
   const [creating, setCreating] = useState(false)
   const [toast, setToast] = useState('')
 
   const state = useAsync(
-    () => api.listRequests({ page, status, search }),
+    () => api.listRequests({ page, page_size: PAGE_SIZE, status, search }),
     [page, status, search],
   )
 
@@ -200,7 +201,7 @@ export function RequestTable({
                 <StatusBadge status={row.status} />
               </td>
               <td>
-                <Link className="btnlink" to={`/requests/${row.id}`}>
+                <Link className="btnlink table-open" to={`/requests/${row.id}`}>
                   Open
                 </Link>
               </td>
@@ -376,3 +377,4 @@ function NewRequestDialog({
     </Modal>
   )
 }
+

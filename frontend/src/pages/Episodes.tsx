@@ -30,7 +30,7 @@ import {
   formatDate,
 } from '../components/format'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 const QUALITIES: Quality[] = ['good', 'usable', 'bad']
@@ -42,12 +42,14 @@ export function Episodes() {
   const [availableOnly, setAvailableOnly] = useState(false)
   const [importing, setImporting] = useState(false)
   const [report, setReport] = useState<ImportSummary | null>(null)
+  const [reportRevision, setReportRevision] = useState(0)
   const [toast, setToast] = useState('')
 
   const state = useAsync(
     () =>
       api.listEpisodes({
         page,
+        page_size: PAGE_SIZE,
         search,
         quality,
         ...(availableOnly ? { available: true } : {}),
@@ -186,7 +188,7 @@ export function Episodes() {
         )}
       </section>
 
-      {report ? <ImportReport summary={report} /> : null}
+      {report ? <ImportReport key={reportRevision} summary={report} /> : null}
 
       {importing ? (
         <ImportDialog
@@ -196,6 +198,7 @@ export function Episodes() {
           onDone={(summary) => {
             setImporting(false)
             setReport(summary)
+            setReportRevision((revision) => revision + 1)
             setToast(
               `${String(summary.imported)} imported, ${String(summary.skipped)} skipped.`,
             )
@@ -308,6 +311,9 @@ function ImportDialog({
 }
 
 function ImportReport({ summary }: { summary: ImportSummary }) {
+  const [page, setPage] = useState(1)
+  const issues = summary.issues.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <section className="panel" style={{ marginTop: 20 }}>
       <h2>Last import report</h2>
@@ -353,7 +359,7 @@ function ImportReport({ summary }: { summary: ImportSummary }) {
                 </tr>
               </thead>
               <tbody>
-                {summary.issues.map((issue, index) => (
+                  {issues.map((issue, index) => (
                   <tr key={`${String(issue.line)}-${String(index)}`}>
                     <td>{issue.line}</td>
                     <td>{issue.episode_id || <span className="muted">no id</span>}</td>
@@ -368,6 +374,12 @@ function ImportReport({ summary }: { summary: ImportSummary }) {
               </tbody>
             </table>
           </TableWrap>
+          <Pagination
+            page={page}
+            count={summary.issues.length}
+            pageSize={PAGE_SIZE}
+            onPage={setPage}
+          />
           {summary.issues_truncated ? (
             <p className="help">
               Only the first {summary.issues.length} issues are listed. The counts

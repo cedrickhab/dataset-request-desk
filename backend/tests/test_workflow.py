@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -119,6 +119,27 @@ class TestOwnership:
         body = session.get("/api/requests").json()
         assert [row["id"] for row in body["results"]] == [str(mine.id)]
         assert body["count"] == 1
+
+    def test_delivered_list_is_client_scoped_and_orders_by_delivery_time(
+        self, login, client_a, client_b, make_request
+    ):
+        older = make_request(client_a, status=RequestStatus.DELIVERED)
+        newer = make_request(client_a, status=RequestStatus.DELIVERED)
+        make_request(client_b, status=RequestStatus.DELIVERED)
+        older.first_delivered_at = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        older.save(update_fields=["first_delivered_at"])
+        newer.first_delivered_at = datetime(2026, 10, 2, tzinfo=timezone.utc)
+        newer.save(update_fields=["first_delivered_at"])
+
+        body = login(client_a).get(
+            "/api/requests?status=delivered&page_size=3"
+        ).json()
+
+        assert body["count"] == 2
+        assert [row["id"] for row in body["results"]] == [
+            str(newer.id),
+            str(older.id),
+        ]
 
     def test_other_clients_request_is_404_not_403(
         self, login, client_a, client_b, make_request

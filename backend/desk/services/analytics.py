@@ -20,9 +20,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.db import connection
-from django.db.models import Count, Q
+from django.db.models import Count, Min, Q
 from django.db.models.functions import TruncDay
 
 from desk.models import DatasetRequest, Episode, Quality, RequestStatus
@@ -170,4 +172,112 @@ def build_report(window: Window) -> dict[str, object]:
         "median_delivery_seconds": median_delivery_seconds(window),
         "top_good_tasks": top_good_tasks(window),
         "semantics": SEMANTICS,
+    }
+
+
+# --- Episode quality over time (dashboard chart) ------------------------------
+#
+# This series answers "how many episodes did we successfully import each day,
+# and how good were they". It is an import-volume measure, deliberately keyed
+# on imported_at -- the persisted creation timestamp written once when the CSV
+# row became an Episode row -- and never on recorded_at, which says when the
+# robot recorded the clip and may be months earlier, nor on any updated_at.
+#
+# Days are bounded by the business time zone (Africa/Kigali by default,
+# settings.BUSINESS_TIME_ZONE), because the operations team reads the chart as
+# their own working calendar; the analytics report above stays UTC by design.
+#
+# Duplicate, conflicting and invalid CSV rows never become Episode rows (the
+# importer is create-only), so counting rows is exactly counting successful
+# imports; rejected rows cannot be counted twice by construction.
+
+QUALITY_SERIES_SEMANTICS = {
+    "dates": "start and end are inclusive calendar dates interpreted in the business time zone",
+    "window": "half-open [start 00:00 business tz, end+1 day 00:00 business tz)",
+    "bucket": "episodes grouped by the local calendar day of their imported_at timestamp",
+    "imported_at": (
+        "the persisted creation timestamp of the episode row (set once on "
+        "import); recording dates and updated timestamps are never used"
+    ),
+    "zero_fill": (
+        "every date from max(start, earliest imported day) through end is "
+        "present, zero when nothing was imported; earlier dates are absent "
+        "because no import history exists for them"
+    ),
+    "duplicates": (
+        "rejected, conflicting and invalid CSV rows never created episode "
+        "rows, so they cannot inflate these counts"
+    ),
+}
+
+
+def _business_tzinfo() -> ZoneInfo:
+    return ZoneInfo(settings.BUSINESS_TIME_ZONE)
+
+
+def _local_bounds(window: Window) -> tuple[datetime, datetime]:
+    """[start, end+1) as aware datetimes at midnight in the business zone."""
+    tz = _business_tzinfo()
+    lower = datetime.combine(window.start, time.min, tzinfo=tz)
+    upper = datetime.combine(window.end + timedelta(days=1), time.min, tzinfo=tz)
+    return lower, upper
+
+
+def grouped_quality_imports(window: Window) -> dict[date, dict[str, int]]:
+    """Day -> per-quality counts, aggregated entirely in PostgreSQL."""
+    tz = _business_tzinfo()
+    lower, upper = _local_bounds(window)
+    rows = (
+        Episode.objects.filter(imported_at__gte=lower, imported_at__lt=upper)
+        # TruncDay with tzinfo buckets on the business-zone calendar day; on
+        # PostgreSQL this compiles to date_trunc AT TIME ZONE, still one query.
+        .annotate(day=TruncDay("imported_at", tzinfo=tz))
+        .values("day", "quality")
+        .annotate(count=Count("id"))
+        .order_by("day", "quality")
+    )
+    grouped: dict[date, dict[str, int]] = {}
+    for row in rows:
+        day: date = row["day"].date()
+        counts = grouped.setdefault(day, {"good": 0, "usable": 0, "bad": 0})
+        counts[row["quality"]] = row["count"]
+    return grouped
+
+
+def earliest_import_day() -> date | None:
+    """First day with any import, in the business zone; None with no data."""
+    tz = _business_tzinfo()
+    first = Episode.objects.aggregate(first=Min("imported_at"))["first"]
+    if first is None:
+        return None
+    return first.astimezone(tz).date()
+
+
+def quality_series(window: Window) -> dict[str, object]:
+    """Zero-filled daily Good/Usable/Bad import counts for the chart.
+
+    Dates before the earliest import are omitted rather than zero-filled: an
+    empty day inside the recorded history is a confirmed zero, while history
+    before the system existed is unavailable, and the two must not look alike.
+    """
+    grouped = grouped_quality_imports(window)
+    data_start = earliest_import_day()
+    days: list[dict[str, object]] = []
+    if data_start is not None:
+        zero = {"good": 0, "usable": 0, "bad": 0}
+        day = max(window.start, data_start)
+        while day <= window.end:
+            days.append({"date": day.isoformat(), **grouped.get(day, zero)})
+            day += timedelta(days=1)
+    total = sum(
+        int(day["good"]) + int(day["usable"]) + int(day["bad"]) for day in days
+    )
+    return {
+        "start": window.start.isoformat(),
+        "end": window.end.isoformat(),
+        "timezone": settings.BUSINESS_TIME_ZONE,
+        "days": days,
+        "data_start": data_start.isoformat() if data_start else None,
+        "total_imported": total,
+        "semantics": QUALITY_SERIES_SEMANTICS,
     }

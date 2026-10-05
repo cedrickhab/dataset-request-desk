@@ -18,6 +18,7 @@ import {
   Loading,
   MetricCard,
   PageHeading,
+  Pagination,
   StatusBadge,
   TableWrap,
 } from '../components/ui'
@@ -34,6 +35,8 @@ const STATUSES: RequestStatus[] = [
   'rejected',
 ]
 
+const PAGE_SIZE = 10
+
 function defaultRange(): { start: string; end: string } {
   const end = new Date()
   const start = new Date()
@@ -47,6 +50,7 @@ export function Analytics() {
   // typing a date does not fire a query per keystroke.
   const [draft, setDraft] = useState(initial)
   const [applied, setApplied] = useState(initial)
+  const [tablePage, setTablePage] = useState(1)
 
   const state = useAsync(
     () => api.analytics(applied.start, applied.end),
@@ -56,6 +60,7 @@ export function Analytics() {
   function onSubmit(event: FormEvent) {
     event.preventDefault()
     setApplied(draft)
+    setTablePage(1)
   }
 
   const report = state.data
@@ -169,26 +174,37 @@ export function Analytics() {
             {report.daily_episodes.length === 0 ? (
               <EmptyState>No episodes were recorded in this range.</EmptyState>
             ) : (
-              <TableWrap>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>DAY (UTC)</th>
-                      <th>ROBOT</th>
-                      <th>EPISODES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.daily_episodes.map((row) => (
-                      <tr key={`${row.day}-${row.robot_id}`}>
-                        <td>{row.day}</td>
-                        <td>{row.robot_id}</td>
-                        <td>{row.count}</td>
+              <>
+                <TableWrap>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>DAY (UTC)</th>
+                        <th>ROBOT</th>
+                        <th>EPISODES</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </TableWrap>
+                    </thead>
+                    <tbody>
+                      {report.daily_episodes
+                        .slice((tablePage - 1) * PAGE_SIZE, tablePage * PAGE_SIZE)
+                        .map((row) => (
+                          <tr key={`${row.day}-${row.robot_id}`}>
+                            <td>{row.day}</td>
+                            <td>{row.robot_id}</td>
+                            <td>{row.count}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </TableWrap>
+                <Pagination
+                  page={tablePage}
+                  count={report.daily_episodes.length}
+                  pageSize={PAGE_SIZE}
+                  onPage={setTablePage}
+                  busy={state.loading}
+                />
+              </>
             )}
             <p className="help">
               Grouped with date_trunc and COUNT in the database. The median uses

@@ -12,7 +12,7 @@ import io
 import logging
 
 from django.conf import settings
-from django.db.models import Count, QuerySet
+from django.db.models import Count, F, QuerySet
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -73,6 +73,10 @@ class RequestListCreateView(APIView):
         status_filter = request.query_params.get("status", "").strip()
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+        if status_filter == "delivered":
+            queryset = queryset.order_by(
+                F("first_delivered_at").desc(nulls_last=True), "-id"
+            )
         task = request.query_params.get("task_name", "").strip()
         if task:
             queryset = queryset.filter(task_name__icontains=task)
@@ -317,6 +321,25 @@ class AnalyticsView(APIView):
             start=serializer.validated_data["start"], end=serializer.validated_data["end"]
         )
         return Response(analytics_service.build_report(window))
+
+
+class EpisodeQualitySeriesView(APIView):
+    """Daily Good/Usable/Bad successful-import counts for the dashboard chart.
+
+    A narrow extension of the analytics surface, with the same restrictions:
+    staff-only, date validation shared with /api/analytics, aggregation in
+    PostgreSQL, and semantics returned in the response body.
+    """
+
+    permission_classes = [IsStaff]
+
+    def get(self, request):
+        serializer = AnalyticsQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        window = analytics_service.Window(
+            start=serializer.validated_data["start"], end=serializer.validated_data["end"]
+        )
+        return Response(analytics_service.quality_series(window))
 
 
 def _get_visible_or_404(user, request_id) -> DatasetRequest:

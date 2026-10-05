@@ -16,10 +16,15 @@ import type { JSX } from 'react'
 export type IconName =
   | 'arrow-left'
   | 'chart-no-axes-combined'
+  | 'circle-check'
   | 'clipboard-list'
+  | 'clock'
   | 'database'
+  | 'file-text'
+  | 'layers'
   | 'layout-dashboard'
   | 'log-out'
+  | 'package-check'
   | 'plus'
   | 'rotate-ccw'
   | 'trash-2'
@@ -32,6 +37,34 @@ const PATHS: Record<IconName, JSX.Element> = {
     <>
       <path d="m12 19-7-7 7-7" />
       <path d="M19 12H5" />
+    </>
+  ),
+  'circle-check': (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  'clock': (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </>
+  ),
+  'layers': (
+    <>
+      <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+      <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+      <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+    </>
+  ),
+  'package-check': (
+    <>
+      <path d="m16 16 2 2 4-4" />
+      <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />
+      <path d="m7.5 4.27 9 5.15" />
+      <polyline points="3.29 7 12 12 20.71 7" />
+      <line x1="12" x2="12" y1="22" y2="12" />
     </>
   ),
   'chart-no-axes-combined': (
@@ -59,6 +92,14 @@ const PATHS: Record<IconName, JSX.Element> = {
       <ellipse cx="12" cy="5" rx="9" ry="3" />
       <path d="M3 5V19A9 3 0 0 0 21 19V5" />
       <path d="M3 12A9 3 0 0 0 21 12" />
+    </>
+  ),
+  'file-text': (
+    <>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h8" />
     </>
   ),
   'layout-dashboard': (

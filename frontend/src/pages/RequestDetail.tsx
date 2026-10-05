@@ -21,6 +21,7 @@ import {
   ErrorBox,
   Loading,
   Modal,
+  Pagination,
   PageHeading,
   QualityBadge,
   Spinner,
@@ -38,6 +39,7 @@ import {
 /** Export states that are still moving, so the page should keep polling. */
 const ACTIVE_EXPORTS = new Set(['pending', 'processing', 'retry_wait'])
 const POLL_INTERVAL_MS = 3000
+const PAGE_SIZE = 10
 
 export function RequestDetail() {
   const { id = '' } = useParams()
@@ -47,6 +49,7 @@ export function RequestDetail() {
   const [pending, setPending] = useState<string | null>(null)
   const [assigning, setAssigning] = useState(false)
   const [rejecting, setRejecting] = useState(false)
+  const [assignedPageState, setAssignedPageState] = useState({ requestId: id, page: 1 })
 
   const request = useAsync((signal) => api.getRequest(id, signal), [id])
   const assignments = useAsync((signal) => api.listAssignments(id, signal), [id])
@@ -61,6 +64,10 @@ export function RequestDetail() {
   const rows = assignments.data?.results ?? []
   const hasActiveExports = rows.some(
     (row) => row.export_job && ACTIVE_EXPORTS.has(row.export_job.status),
+  )
+  const assignedPage = Math.min(
+    assignedPageState.requestId === id ? assignedPageState.page : 1,
+    Math.max(1, Math.ceil(rows.length / PAGE_SIZE)),
   )
 
   // Poll only while a job is actually moving, and skip the tick when the tab
@@ -266,12 +273,21 @@ export function RequestDetail() {
             ) : rows.length === 0 ? (
               <EmptyState>No episodes assigned yet.</EmptyState>
             ) : (
-              <AssignedTable
-                rows={rows}
-                canEdit={canEditAssignments}
-                pending={pending}
-                onRemove={(assignmentId) => void removeAssignment(assignmentId)}
-              />
+              <>
+                <AssignedTable
+                  rows={rows.slice((assignedPage - 1) * PAGE_SIZE, assignedPage * PAGE_SIZE)}
+                  canEdit={canEditAssignments}
+                  pending={pending}
+                  onRemove={(assignmentId) => void removeAssignment(assignmentId)}
+                />
+                <Pagination
+                  page={assignedPage}
+                  count={rows.length}
+                  pageSize={PAGE_SIZE}
+                  onPage={(page) => setAssignedPageState({ requestId: id, page })}
+                  busy={assignments.loading}
+                />
+              </>
             )}
 
             <p className="help">

@@ -87,14 +87,19 @@ export function Shell() {
 
       <div className="workspace">
         <header className="topbar">
-          <span className="muted">Workspace / {current}</span>
+          {/* Single text node: several tests and screen readers match it whole. */}
+          <span className="breadcrumb">Workspace / {current}</span>
           <AccountPopover />
         </header>
 
         <main className="main" id="main">
           <Outlet />
         </main>
-        <footer className="workspace-footer">Dataset Request Desk</footer>
+        <footer className="workspace-footer">
+          <span>Dataset Request Desk</span>
+          {/* Real project metadata only: injected from package.json by Vite. */}
+          <span>v{__APP_VERSION__}</span>
+        </footer>
       </div>
     </div>
   )

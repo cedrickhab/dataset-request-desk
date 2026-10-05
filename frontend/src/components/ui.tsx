@@ -13,7 +13,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 import { statusLabel, titleCase, type BadgeKind } from './format'
 import type { Quality, RequestStatus } from '../api/types'
 
@@ -133,32 +133,45 @@ export function Pagination({
   busy?: boolean
 }) {
   const pages = Math.max(1, Math.ceil(count / pageSize))
+  if (count <= pageSize) return null
+  const visiblePages: (number | 'ellipsis')[] =
+    pages <= 7
+      ? Array.from({ length: pages }, (_, index) => index + 1)
+      : page <= 4
+        ? [1, 2, 3, 4, 5, 'ellipsis', pages]
+        : page >= pages - 3
+          ? [1, 'ellipsis', pages - 4, pages - 3, pages - 2, pages - 1, pages]
+          : [1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', pages]
+
   return (
-    <div className="pagination">
+    <nav className="pagination" aria-label="Pagination">
       <small>
         {count} record{count === 1 ? '' : 's'} · Page {page} of {pages}
       </small>
-      <div className="row">
-        <button
-          type="button"
-          disabled={page <= 1 || busy}
-          onClick={() => {
-            onPage(page - 1)
-          }}
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          disabled={page >= pages || busy}
-          onClick={() => {
-            onPage(page + 1)
-          }}
-        >
-          Next
-        </button>
+      <div className="page-numbers">
+        {visiblePages.map((item, index) =>
+          item === 'ellipsis' ? (
+            <span className="page-ellipsis" key={`ellipsis-${index}`} aria-hidden="true">
+              …
+            </span>
+          ) : (
+            <button
+              className="page-button"
+              type="button"
+              key={item}
+              aria-current={item === page ? 'page' : undefined}
+              aria-label={`Page ${item}`}
+              disabled={busy}
+              onClick={() => {
+                onPage(item)
+              }}
+            >
+              {item}
+            </button>
+          ),
+        )}
       </div>
-    </div>
+    </nav>
   )
 }
 
@@ -273,28 +286,44 @@ export function MetricCard({
   label,
   value,
   hint,
+  icon,
 }: {
   label: string
   value: ReactNode
   hint?: string | undefined
+  icon?: IconName | undefined
 }) {
   return (
     <div className="card">
-      <small>{label}</small>
+      <div className="card-head">
+        <small>{label}</small>
+        {icon ? (
+          <span className="card-icon" aria-hidden="true">
+            <Icon name={icon} size={16} />
+          </span>
+        ) : null}
+      </div>
       <div className="metric">{value}</div>
       {hint ? <small>{hint}</small> : null}
     </div>
   )
 }
 
+/**
+ * One thin horizontal bar. The colour is semantic (request status), passed by
+ * the caller; the scale is common across every row in the chart, so `max` is
+ * the largest current count rather than the total.
+ */
 export function BarRow({
   label,
   value,
   max,
+  color,
 }: {
   label: ReactNode
   value: number
   max: number
+  color?: string | undefined
 }) {
   const width = max > 0 ? (value / max) * 100 : 0
   return (
@@ -304,7 +333,12 @@ export function BarRow({
         <strong>{value}</strong>
       </div>
       <div className="bar">
-        <i style={{ width: `${String(width)}%` }} />
+        <i
+          style={{
+            width: `${String(width)}%`,
+            ...(color ? { background: color } : {}),
+          }}
+        />
       </div>
     </div>
   )

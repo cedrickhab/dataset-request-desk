@@ -8,12 +8,17 @@
 
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from '../App'
 import { makeUser, paginated, renderWithProviders, stubFetch } from '../test/helpers'
 
+// These tests exercise authentication, not drawing. jsdom has no 2D context;
+// sizing/drawing lifecycle is covered in LoginParticleWave.test.tsx and Chrome.
+beforeEach(() => vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null))
+
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 

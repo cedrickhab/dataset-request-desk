@@ -72,3 +72,21 @@ export function isoDay(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${String(date.getFullYear())}-${month}-${day}`
 }
+
+/**
+ * Today's calendar date in the application's business time zone, as
+ * YYYY-MM-DD. The backend aggregates import days on Africa/Kigali
+ * (settings.BUSINESS_TIME_ZONE); the dashboard's range selector must end on
+ * that same "today" so the selector and the data share one boundary.
+ */
+export function todayInBusinessZone(): string {
+  // en-CA formats as YYYY-MM-DD.
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kigali' }).format(new Date())
+}
+
+/** ISO date shifted by whole days on the UTC calendar (safe for YYYY-MM-DD). */
+export function shiftDay(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
