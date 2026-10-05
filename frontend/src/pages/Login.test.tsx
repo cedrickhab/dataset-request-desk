@@ -17,6 +17,10 @@ import { makeUser, paginated, renderWithProviders, stubFetch, urlOf } from '../t
 // sizing/drawing lifecycle is covered in LoginParticleWave.test.tsx and Chrome.
 beforeEach(() => vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null))
 
+// These tests exercise authentication, not drawing. jsdom has no 2D context;
+// sizing/drawing lifecycle is covered in LoginParticleWave.test.tsx and Chrome.
+beforeEach(() => vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null))
+
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
